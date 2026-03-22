@@ -27,7 +27,9 @@ function DevGateForm() {
 
       if (res.ok) {
         const redirect = searchParams.get('redirect') || '/watchlist'
-        router.push(redirect)
+        // Use window.location for hard navigation so middleware sees the new cookie
+        window.location.href = redirect
+        return
       } else {
         setShake(true)
         setError('Wrong password')
