@@ -1,0 +1,211 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── Mise Design Tokens ── */
+/* Impeccable: OKLCH tinted neutrals (warm hue 45 — amber/gold tint for hospitality) */
+/* No pure black. No pure white. No rgba transparency. */
+
+:root {
+  /* Surfaces */
+  --surface-0: #100f0d;     /* deepest bg — warm near-black */
+  --surface-1: #1a1815;     /* sidebar, header */
+  --surface-2: #23201b;     /* cards, elevated */
+  --surface-3: #2e2a24;     /* hover, active */
+  --surface-4: #3a342c;     /* pressed, selected */
+
+  /* Borders */
+  --border: #342e27;
+  --border-subtle: #252119;
+  --border-strong: #443c32;
+
+  /* Text */
+  --text-primary: #ede8e0;
+  --text-secondary: #9e9689;
+  --text-muted: #6b6358;
+  --text-inverse: #100f0d;
+
+  /* Accent — warm gold (hospitality, premium) */
+  --accent: #d4a853;
+  --accent-hover: #e0bc6e;
+  --accent-muted: #2a2215;
+  --accent-text: #100f0d;
+
+  /* Semantic */
+  --success: #4aba6a;
+  --success-muted: #1a2e20;
+  --warning: #d4a853;
+  --warning-muted: #2a2215;
+  --error: #d45353;
+  --error-muted: #2e1a1a;
+
+  /* Easing */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Spacing (4pt base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--surface-0);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* ── Type Scale (fixed rem, not fluid — this is an app UI) ── */
+.text-display    { font-size: 36px; line-height: 44px; letter-spacing: -0.025em; font-weight: 700; }
+.text-heading-24 { font-size: 24px; line-height: 32px; letter-spacing: -0.02em; font-weight: 600; }
+.text-heading-20 { font-size: 20px; line-height: 28px; letter-spacing: -0.015em; font-weight: 600; }
+.text-heading-16 { font-size: 16px; line-height: 24px; letter-spacing: -0.01em; font-weight: 600; }
+.text-body-16    { font-size: 16px; line-height: 26px; font-weight: 400; }
+.text-body-14    { font-size: 14px; line-height: 22px; font-weight: 400; }
+.text-caption    { font-size: 12px; line-height: 16px; letter-spacing: 0.02em; font-weight: 500; }
+.text-label      { font-size: 11px; line-height: 16px; letter-spacing: 0.05em; font-weight: 600; text-transform: uppercase; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--surface-4); }
+
+/* ── Focus ── */
+*:focus { outline: none; }
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Skeleton ── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* ── Status dots ── */
+.status-available { color: var(--success); }
+.status-limited { color: var(--warning); }
+.status-unavailable { color: var(--error); }
+
+/* ── Tabular nums for data ── */
+.font-tabular { font-variant-numeric: tabular-nums; }
+
+/* ── Input ── */
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  outline: none;
+  transition: border-color 200ms var(--ease-out-quart);
+}
+.input-field::placeholder { color: var(--text-muted); }
+.input-field:hover { border-color: var(--border); }
+.input-field:focus { border-color: var(--accent); }
+
+/* ── Buttons ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background-color 150ms var(--ease-out-quart);
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background-color 150ms var(--ease-out-quart), border-color 150ms var(--ease-out-quart);
+}
+.btn-secondary:hover { background: var(--surface-3); border-color: var(--border); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  transition: color 150ms var(--ease-out-quart), background-color 150ms var(--ease-out-quart);
+}
+.btn-ghost:hover { background: var(--surface-2); color: var(--text-primary); }
+
+/* ── Card ── */
+.card {
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+}
+.card-hover {
+  cursor: pointer;
+  transition: background-color 150ms var(--ease-out-quart), border-color 150ms var(--ease-out-quart);
+}
+.card-hover:hover {
+  background: var(--surface-3);
+  border-color: var(--border);
+}
+
+/* ── Stars ── */
+.star { color: var(--accent); }
+
+@theme inline {
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-accent: var(--accent);
+}
