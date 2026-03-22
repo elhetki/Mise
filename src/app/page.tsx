@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, Bell, Clock, ArrowRight, Check } from 'lucide-react'
+import { Star, Bell, Clock, Eye, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 const FEATURED_RESTAURANTS = [
   { name: 'The Table', city: 'Hamburg', stars: 3, status: 'unavailable' as const },
@@ -11,183 +12,367 @@ const FEATURED_RESTAURANTS = [
   { name: 'Restaurant Amador', city: 'Wien', stars: 3, status: 'available' as const },
 ]
 
+const VALUE_PROPS = [
+  {
+    icon: Eye,
+    title: 'Continuous Monitoring',
+    desc: 'We check availability every few minutes so you don\'t have to.',
+  },
+  {
+    icon: Bell,
+    title: 'Instant Alerts',
+    desc: 'Get notified the moment a table opens at your target date and party size.',
+  },
+  {
+    icon: Clock,
+    title: 'Flexible Windows',
+    desc: 'Set a date range and time window. We\'ll find any opening that works for you.',
+  },
+]
+
 function Stars({ count }: { count: number }) {
   return (
-    <span className="inline-flex gap-0.5">
+    <span className="inline-flex gap-0.5" aria-label={`${count} Michelin stars`}>
       {Array.from({ length: count }).map((_, i) => (
-        <Star key={i} size={12} fill="var(--accent)" stroke="none" />
+        <Star
+          key={i}
+          size={11}
+          style={{ color: 'var(--gold)', fill: 'var(--gold)' }}
+          strokeWidth={0}
+        />
       ))}
     </span>
   )
 }
 
-function StatusDot({ status }: { status: 'available' | 'limited' | 'unavailable' }) {
-  const colors = {
-    available: 'var(--success)',
-    limited: 'var(--warning)',
-    unavailable: 'var(--error)',
-  }
+function StatusPill({ status }: { status: 'available' | 'limited' | 'unavailable' }) {
+  const config = {
+    available:   { dot: 'status-dot-available',   label: 'Slots open' },
+    limited:     { dot: 'status-dot-limited',      label: 'Limited' },
+    unavailable: { dot: 'status-dot-unavailable',  label: 'Tracking' },
+  }[status]
+
   return (
-    <span
-      className="inline-block w-2 h-2 rounded-full shrink-0"
-      style={{ background: colors[status] }}
-    />
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`status-dot ${config.dot}`} />
+      <span className="text-caption">{config.label}</span>
+    </span>
   )
 }
 
 export default function LandingPage() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!email.trim()) return
-    // TODO: Save to Supabase waitlist table
-    setSubmitted(true)
+    if (!email) return
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || 'Something went wrong. Please try again.')
+      } else {
+        setSubmitted(true)
+      }
+    } catch {
+      setError('Network error. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--surface-0)' }}>
+    <div style={{ background: 'var(--paper)', minHeight: '100vh' }}>
       {/* Nav */}
-      <nav className="flex items-center justify-between px-6 md:px-12 h-16">
-        <span className="text-heading-16" style={{ color: 'var(--text-primary)' }}>mise</span>
-        <a
-          href="/login"
-          className="text-body-14 cursor-pointer"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          Sign in
-        </a>
+      <nav style={{
+        borderBottom: '1px solid var(--line)',
+        background: 'var(--paper)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+      }}>
+        <div style={{
+          maxWidth: 1120,
+          margin: '0 auto',
+          padding: '0 32px',
+          height: 56,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <span style={{
+            fontFamily: 'Fraunces, Georgia, serif',
+            fontSize: 22,
+            fontWeight: 700,
+            color: 'var(--ink)',
+            letterSpacing: '-0.03em',
+          }}>
+            mise
+          </span>
+          <Link
+            href="/login"
+            className="btn btn-ghost btn-sm"
+          >
+            Sign in
+          </Link>
+        </div>
       </nav>
 
-      {/* Hero — left-aligned, asymmetric */}
-      <main className="px-6 md:px-12 pt-16 md:pt-24 pb-16 max-w-[1200px]">
-        <div className="grid md:grid-cols-[1.2fr_1fr] gap-16 md:gap-24 items-start">
-          {/* Left — copy */}
-          <div>
-            <p
-              className="text-label mb-4"
-              style={{ color: 'var(--accent)' }}
-            >
+      {/* Hero */}
+      <section style={{
+        maxWidth: 1120,
+        margin: '0 auto',
+        padding: '80px 32px 64px',
+      }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 420px',
+          gap: 64,
+          alignItems: 'start',
+        }}>
+          {/* Left: Text + Form */}
+          <div style={{ maxWidth: 560 }}>
+            <div style={{
+              display: 'inline-block',
+              background: 'var(--burgundy-bg)',
+              color: 'var(--burgundy)',
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              padding: '4px 12px',
+              borderRadius: 999,
+              marginBottom: 24,
+            }}>
               Michelin Restaurant Tracker
-            </p>
+            </div>
 
-            <h1
-              className="text-display mb-6"
-              style={{ color: 'var(--text-primary)', maxWidth: '520px' }}
-            >
-              Never miss a table at your favorite restaurant
+            <h1 style={{
+              fontFamily: 'Fraunces, Georgia, serif',
+              fontSize: 'clamp(32px, 4vw, 44px)',
+              fontWeight: 700,
+              lineHeight: 1.08,
+              letterSpacing: '-0.03em',
+              color: 'var(--ink)',
+              marginBottom: 20,
+            }}>
+              Never miss a table at your favourite restaurant
             </h1>
 
-            <p
-              className="text-body-16 mb-12"
-              style={{ color: 'var(--text-secondary)', maxWidth: '460px' }}
-            >
-              Mise tracks Michelin-starred restaurants for open slots and notifies you instantly. Stop refreshing booking pages — let us watch for you.
+            <p style={{
+              fontSize: 16,
+              lineHeight: 1.65,
+              color: 'var(--ink-2)',
+              marginBottom: 40,
+              maxWidth: 440,
+            }}>
+              Mise watches Michelin-starred restaurants around the clock and alerts you the moment a reservation becomes available — for your date, time, and party size.
             </p>
 
-            {/* Waitlist form */}
             {submitted ? (
-              <div className="flex items-center gap-3 py-4">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ background: 'var(--success-muted)' }}
-                >
-                  <Check size={16} style={{ color: 'var(--success)' }} />
-                </div>
-                <span className="text-body-14" style={{ color: 'var(--text-primary)' }}>
-                  You&apos;re on the list. We&apos;ll notify you when Mise launches.
-                </span>
+              <div style={{
+                background: 'var(--green-bg)',
+                border: '1px solid var(--green)',
+                borderRadius: 12,
+                padding: '20px 24px',
+                color: 'var(--green)',
+                fontSize: 15,
+                fontWeight: 500,
+              }}>
+                ✓ You&apos;re on the list. We&apos;ll be in touch soon.
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="flex gap-3 max-w-[400px]">
+              <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 10, maxWidth: 440 }}>
                 <input
                   type="email"
+                  placeholder="your@email.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="your@email.com"
                   required
-                  className="input-field flex-1"
+                  className="input"
+                  style={{ flex: 1 }}
                 />
-                <button type="submit" className="btn-primary shrink-0">
-                  Join waitlist
-                  <ArrowRight size={14} />
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={loading}
+                  style={{ flexShrink: 0 }}
+                >
+                  {loading ? 'Joining…' : 'Join waitlist'}
+                  {!loading && <ArrowRight size={14} />}
                 </button>
               </form>
             )}
 
-            {/* Value props */}
-            <div className="flex flex-col gap-4 mt-12">
-              {[
-                { icon: Bell, text: 'Instant alerts when a slot opens' },
-                { icon: Clock, text: 'Checks every 5 minutes, 24/7' },
-                { icon: Star, text: '15+ Michelin restaurants tracked' },
-              ].map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-3">
-                  <Icon size={16} style={{ color: 'var(--text-muted)' }} />
-                  <span className="text-body-14" style={{ color: 'var(--text-secondary)' }}>
-                    {text}
-                  </span>
+            {error && (
+              <p style={{ color: 'var(--red)', fontSize: 13, marginTop: 8 }}>{error}</p>
+            )}
+
+            <p style={{ color: 'var(--ink-4)', fontSize: 12, marginTop: 12 }}>
+              No spam. Early access only.
+            </p>
+          </div>
+
+          {/* Right: Restaurant preview card */}
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid var(--line)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <span style={{
+                fontFamily: 'Fraunces, Georgia, serif',
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--ink)',
+              }}>
+                Watching now
+              </span>
+              <span className="text-caption">5 restaurants</span>
+            </div>
+
+            <div style={{ padding: '8px 0' }}>
+              {FEATURED_RESTAURANTS.map((r, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 20px',
+                    borderBottom: i < FEATURED_RESTAURANTS.length - 1 ? '1px solid var(--line)' : 'none',
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontFamily: 'Fraunces, Georgia, serif',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: 'var(--ink)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      marginBottom: 2,
+                    }}>
+                      {r.name}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Stars count={r.stars} />
+                      <span className="text-caption">{r.city}</span>
+                    </div>
+                  </div>
+                  <StatusPill status={r.status} />
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Right — live restaurant preview */}
-          <div
-            className="rounded-2xl p-1 mt-4 md:mt-12"
-            style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}
-          >
-            <div className="p-4">
-              <p className="text-caption mb-4" style={{ color: 'var(--text-muted)' }}>
-                Live tracking
-              </p>
-              <div className="flex flex-col gap-1">
-                {FEATURED_RESTAURANTS.map(r => (
-                  <div
-                    key={r.name}
-                    className="flex items-center gap-3 px-3 py-3 rounded-lg"
-                    style={{ transition: 'background-color 150ms var(--ease-out-quart)' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <StatusDot status={r.status} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-body-14 truncate" style={{ color: 'var(--text-primary)' }}>
-                          {r.name}
-                        </span>
-                        <Stars count={r.stars} />
-                      </div>
-                      <span className="text-caption" style={{ color: 'var(--text-muted)' }}>
-                        {r.city}
-                      </span>
-                    </div>
-                    <span
-                      className="text-caption shrink-0"
-                      style={{
-                        color: r.status === 'available' ? 'var(--success)'
-                          : r.status === 'limited' ? 'var(--warning)'
-                          : 'var(--text-muted)'
-                      }}
-                    >
-                      {r.status === 'available' ? 'Slots open'
-                        : r.status === 'limited' ? 'Limited'
-                        : 'Tracking'}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            <div style={{
+              padding: '14px 20px',
+              background: 'var(--paper-dark)',
+              borderTop: '1px solid var(--line)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}>
+              <div className="status-dot status-dot-available" />
+              <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 500 }}>
+                Restaurant Amador just opened a table for 2
+              </span>
             </div>
           </div>
         </div>
-      </main>
+      </section>
+
+      {/* Divider */}
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 32px' }}>
+        <div className="divider" />
+      </div>
+
+      {/* Value props */}
+      <section style={{
+        maxWidth: 1120,
+        margin: '0 auto',
+        padding: '64px 32px',
+      }}>
+        <h2 style={{
+          fontFamily: 'Fraunces, Georgia, serif',
+          fontSize: 20,
+          fontWeight: 600,
+          color: 'var(--ink)',
+          letterSpacing: '-0.02em',
+          marginBottom: 40,
+        }}>
+          How it works
+        </h2>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 24,
+        }}>
+          {VALUE_PROPS.map((vp, i) => (
+            <div key={i} className="card" style={{ padding: 24 }}>
+              <div style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                background: 'var(--burgundy-bg)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 16,
+              }}>
+                <vp.icon size={18} style={{ color: 'var(--burgundy)' }} />
+              </div>
+              <h3 style={{
+                fontFamily: 'Fraunces, Georgia, serif',
+                fontSize: 16,
+                fontWeight: 600,
+                color: 'var(--ink)',
+                marginBottom: 8,
+                letterSpacing: '-0.01em',
+              }}>
+                {vp.title}
+              </h3>
+              <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--ink-2)' }}>
+                {vp.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="px-6 md:px-12 py-8" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-        <span className="text-caption" style={{ color: 'var(--text-muted)' }}>
-          © 2026 Mise. Built for Michelin enthusiasts.
-        </span>
+      <footer style={{
+        borderTop: '1px solid var(--line)',
+        padding: '32px',
+        textAlign: 'left',
+      }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{
+            fontFamily: 'Fraunces, Georgia, serif',
+            fontSize: 16,
+            fontWeight: 600,
+            color: 'var(--ink-3)',
+            letterSpacing: '-0.02em',
+          }}>
+            mise
+          </span>
+          <span className="text-caption">
+            © {new Date().getFullYear()} Mise. All rights reserved.
+          </span>
+        </div>
       </footer>
     </div>
   )
