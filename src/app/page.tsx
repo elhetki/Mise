@@ -174,26 +174,11 @@ export default function LandingPage() {
       <section style={{
         maxWidth: 1120,
         margin: '0 auto',
-        padding: '48px 16px 48px',
+        padding: '24px 16px 48px',
       }}>
         <div className="hero-grid">
           {/* Left: Text + Form */}
           <div>
-            <div style={{
-              display: 'inline-block',
-              background: 'var(--burgundy-bg)',
-              color: 'var(--burgundy)',
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              padding: '4px 12px',
-              borderRadius: 999,
-              marginBottom: 20,
-            }}>
-              Michelin Restaurant Tracker
-            </div>
-
             <h1 style={{
               fontFamily: 'Fraunces, Georgia, serif',
               fontSize: 'clamp(28px, 4vw, 44px)',
