@@ -2,21 +2,23 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Eye, Compass, CalendarCheck, Settings, X } from 'lucide-react'
+import { Eye, Compass, CalendarCheck, Settings, X, Bell } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/watchlist', label: 'Watchlist', icon: Eye },
   { href: '/explore',   label: 'Explore',   icon: Compass },
   { href: '/bookings',  label: 'Bookings',  icon: CalendarCheck },
+  { href: '/notifications', label: 'Notifications', icon: Bell, showBadge: true },
   { href: '/settings',  label: 'Settings',  icon: Settings },
 ]
 
 interface AppSidebarProps {
   mobileOpen?: boolean
   onClose?: () => void
+  unreadCount?: number
 }
 
-export default function AppSidebar({ mobileOpen = false, onClose }: AppSidebarProps) {
+export default function AppSidebar({ mobileOpen = false, onClose, unreadCount = 0 }: AppSidebarProps) {
   const pathname = usePathname()
 
   const sidebarContent = (
@@ -63,8 +65,9 @@ export default function AppSidebar({ mobileOpen = false, onClose }: AppSidebarPr
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '0 12px' }}>
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {NAV_ITEMS.map(({ href, label, icon: Icon, showBadge }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
+          const badgeCount = showBadge && href === '/notifications' ? unreadCount : 0
           return (
             <Link
               key={href}
@@ -89,7 +92,22 @@ export default function AppSidebar({ mobileOpen = false, onClose }: AppSidebarPr
               }}
             >
               <Icon size={16} strokeWidth={active ? 2 : 1.75} />
-              {label}
+              <span style={{ flex: 1 }}>{label}</span>
+              {badgeCount > 0 && (
+                <span style={{
+                  background: 'var(--burgundy)',
+                  color: '#fff',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  borderRadius: 10,
+                  padding: '1px 6px',
+                  minWidth: 18,
+                  textAlign: 'center',
+                  lineHeight: '16px',
+                }}>
+                  {badgeCount > 99 ? '99+' : badgeCount}
+                </span>
+              )}
             </Link>
           )
         })}

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AppSidebar from './sidebar'
-import { Menu } from 'lucide-react'
+import { Menu, Bell } from 'lucide-react'
+import Link from 'next/link'
 
 export default function AppLayout({
   children,
@@ -14,6 +15,7 @@ export default function AppLayout({
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [checking, setChecking] = useState(true)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     const supabase = createClient()
@@ -22,9 +24,21 @@ export default function AppLayout({
         router.replace('/login')
       } else {
         setChecking(false)
+        // Fetch unread notification count
+        fetchUnreadCount(user.id)
       }
     })
   }, [router])
+
+  async function fetchUnreadCount(userId: string) {
+    const supabase = createClient()
+    const { count } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .is('read_at', null)
+    setUnreadCount(count ?? 0)
+  }
 
   if (checking) {
     return (
@@ -59,6 +73,7 @@ export default function AppLayout({
         <AppSidebar
           mobileOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
+          unreadCount={unreadCount}
         />
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -95,7 +110,33 @@ export default function AppLayout({
             }}>
               mise
             </span>
-            <div style={{ width: 36 }} />
+            {/* Mobile bell icon */}
+            <Link
+              href="/notifications"
+              style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: 6, color: 'var(--ink-2)', textDecoration: 'none' }}
+              aria-label="Notifications"
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: 2,
+                  right: 2,
+                  background: 'var(--burgundy)',
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  borderRadius: 10,
+                  padding: '0 4px',
+                  minWidth: 16,
+                  height: 16,
+                  textAlign: 'center',
+                  lineHeight: '16px',
+                }}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Link>
           </div>
 
           <main className="app-content" style={{
