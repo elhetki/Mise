@@ -22,14 +22,10 @@ export default function AddWatchForm({ restaurantId }: { restaurantId: string })
     setError('')
     setLoading(true)
     const supabase = createClient()
+    // Try to get user, but works without auth too (demo mode)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setAuthError(true)
-      setLoading(false)
-      return
-    }
     const { error: insertError } = await supabase.from('watches').insert({
-      user_id: user.id,
+      user_id: user?.id || null,
       restaurant_id: restaurantId,
       date_from: dateFrom,
       date_to: dateTo,
@@ -49,30 +45,7 @@ export default function AddWatchForm({ restaurantId }: { restaurantId: string })
     }
   }
 
-  if (authError) {
-    return (
-      <div style={{
-        background: 'var(--burgundy-bg)',
-        border: '1px solid var(--burgundy)',
-        borderRadius: 8,
-        padding: '16px',
-        fontSize: 14,
-        color: 'var(--burgundy)',
-      }}>
-        <p style={{ fontWeight: 500, marginBottom: 8 }}>Sign in to start watching</p>
-        <p style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 12 }}>
-          Create an account to track this restaurant and get notified when a table opens.
-        </p>
-        <Link
-          href="/login"
-          className="btn btn-primary btn-sm"
-          style={{ display: 'inline-flex', minHeight: 36 }}
-        >
-          Sign in
-        </Link>
-      </div>
-    )
-  }
+  // Auth error state removed — works without login in demo mode
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

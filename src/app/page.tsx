@@ -162,10 +162,10 @@ export default function LandingPage() {
             mise
           </span>
           <Link
-            href="/login"
+            href="/watchlist"
             className="btn btn-ghost btn-sm"
           >
-            Sign in
+            Open app
           </Link>
         </div>
       </nav>

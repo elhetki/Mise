@@ -11,6 +11,13 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/_next/')) return NextResponse.next();
   if (pathname === '/favicon.ico') return NextResponse.next();
 
+  // Redirect old auth pages to watchlist (auth removed, dev gate only)
+  if (pathname === '/login' || pathname === '/signup') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/watchlist';
+    return NextResponse.redirect(url);
+  }
+
   // Check dev access cookie
   const hasAccess = request.cookies.get('mise-dev-access')?.value === 'true';
   if (hasAccess) return NextResponse.next();

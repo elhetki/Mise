@@ -14,21 +14,16 @@ export default function AppLayout({
 }) {
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [checking, setChecking] = useState(true)
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
+    // No auth check — dev gate password is the only gate
+    // Try to fetch notifications if user happens to be logged in
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        router.replace('/login')
-      } else {
-        setChecking(false)
-        // Fetch unread notification count
-        fetchUnreadCount(user.id)
-      }
+      if (user) fetchUnreadCount(user.id)
     })
-  }, [router])
+  }, [])
 
   async function fetchUnreadCount(userId: string) {
     const supabase = createClient()
@@ -38,20 +33,6 @@ export default function AppLayout({
       .eq('user_id', userId)
       .is('read_at', null)
     setUnreadCount(count ?? 0)
-  }
-
-  if (checking) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'var(--paper)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <span style={{ color: 'var(--ink-4)', fontSize: 14 }}>Loading…</span>
-      </div>
-    )
   }
 
   return (
