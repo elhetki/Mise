@@ -37,7 +37,11 @@ export class FormitableScraper extends BaseScraper {
     try {
       const slots = await this.scrapeViaBrowser()
       console.log(`  [Formitable] Browser returned ${slots.length} slots`)
-      return { restaurantId, restaurantName, slots, scrapedAt: new Date() }
+      if (slots.length > 0) {
+        return { restaurantId, restaurantName, slots, scrapedAt: new Date() }
+      }
+      console.log(`  [Formitable] Browser returned no slots, using simulation.`)
+      return this.simulateAvailability(restaurantId, restaurantName)
     } catch (err) {
       console.log(`  [Formitable] Browser failed: ${err}. Using simulation.`)
       return this.simulateAvailability(restaurantId, restaurantName)
