@@ -60,19 +60,34 @@ export default async function RestaurantPage({
   const hasAvailable = avail.some(a => a.status === 'available')
 
   return (
-    <div style={{ padding: '40px 48px', maxWidth: 800 }}>
+    <div style={{ padding: '24px 16px', maxWidth: 800 }}>
+      <style>{`
+        @media (min-width: 768px) {
+          .restaurant-container { padding: 40px 48px !important; }
+          .restaurant-two-col {
+            grid-template-columns: 1fr 1fr !important;
+          }
+          .restaurant-status-row {
+            flex-direction: row !important;
+          }
+          .book-directly-btn {
+            width: auto !important;
+          }
+        }
+      `}</style>
+
       {/* Back */}
       <Link
         href="/explore"
         className="btn btn-ghost btn-sm"
-        style={{ marginBottom: 24, paddingLeft: 0 }}
+        style={{ marginBottom: 20, paddingLeft: 0, minHeight: 44 }}
       >
         <ArrowLeft size={14} />
         Back to Explore
       </Link>
 
       {/* Restaurant header */}
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
           <Stars count={r.michelin_stars} />
           <span className="text-caption">{r.michelin_stars} Michelin {r.michelin_stars === 1 ? 'star' : 'stars'}</span>
@@ -80,7 +95,7 @@ export default async function RestaurantPage({
 
         <h1 style={{
           fontFamily: 'Fraunces, Georgia, serif',
-          fontSize: 36,
+          fontSize: 'clamp(26px, 5vw, 36px)',
           fontWeight: 700,
           color: 'var(--ink)',
           letterSpacing: '-0.03em',
@@ -102,16 +117,23 @@ export default async function RestaurantPage({
       </div>
 
       {/* Current availability status */}
-      <div className="card" style={{ padding: '20px 24px', marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="card" style={{ padding: '18px 20px', marginBottom: 20 }}>
+        <div
+          className="restaurant-status-row"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span className={`status-dot ${hasAvailable ? 'status-dot-available' : 'status-dot-unavailable'}`}
-              style={{ width: 10, height: 10 }}
+              style={{ width: 10, height: 10, flexShrink: 0 }}
             />
             <div>
               <div style={{
                 fontFamily: 'Fraunces, Georgia, serif',
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 600,
                 color: 'var(--ink)',
               }}>
@@ -130,7 +152,8 @@ export default async function RestaurantPage({
               href={r.booking_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-secondary btn-sm"
+              className="btn btn-secondary btn-sm book-directly-btn"
+              style={{ width: '100%', justifyContent: 'center', minHeight: 44 }}
             >
               Book directly
               <ExternalLink size={12} />
@@ -140,9 +163,16 @@ export default async function RestaurantPage({
       </div>
 
       {/* Two column: watch form + history */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div
+        className="restaurant-two-col"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: 16,
+        }}
+      >
         {/* Start watching form */}
-        <div className="card" style={{ padding: '24px' }}>
+        <div className="card" style={{ padding: '20px' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -163,7 +193,7 @@ export default async function RestaurantPage({
         </div>
 
         {/* Availability history */}
-        <div className="card" style={{ padding: '24px' }}>
+        <div className="card" style={{ padding: '20px' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -194,6 +224,8 @@ export default async function RestaurantPage({
                   justifyContent: 'space-between',
                   padding: '8px 0',
                   borderBottom: '1px solid var(--line)',
+                  flexWrap: 'wrap',
+                  gap: 8,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span className={`status-dot ${a.status === 'available' ? 'status-dot-available' : 'status-dot-unavailable'}`} />

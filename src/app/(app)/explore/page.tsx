@@ -30,9 +30,6 @@ function BookingBadge({ type }: { type: Restaurant['booking_type'] }) {
   return <span className="badge">{labels[type]}</span>
 }
 
-// Subtle rotation for personality — alternates between a few values
-const ROTATIONS = ['-0.3deg', '0.2deg', '-0.1deg', '0.3deg', '-0.2deg', '0.1deg']
-
 export default async function ExplorePage({
   searchParams,
 }: {
@@ -56,12 +53,25 @@ export default async function ExplorePage({
   const typed = (restaurants ?? []) as Restaurant[]
 
   return (
-    <div style={{ padding: '40px 48px' }}>
+    <div style={{ padding: '28px 16px' }}>
+      <style>{`
+        @media (min-width: 768px) {
+          .explore-container { padding: 40px 48px !important; }
+          .restaurant-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+          }
+        }
+        .restaurant-card-link:hover .restaurant-card {
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06);
+          transform: translateY(-1px);
+        }
+      `}</style>
+
       {/* Header */}
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 24 }}>
         <h1 style={{
           fontFamily: 'Fraunces, Georgia, serif',
-          fontSize: 28,
+          fontSize: 26,
           fontWeight: 700,
           color: 'var(--ink)',
           letterSpacing: '-0.025em',
@@ -75,7 +85,7 @@ export default async function ExplorePage({
       </div>
 
       {/* Search */}
-      <form method="GET" style={{ marginBottom: 36, maxWidth: 440, position: 'relative' }}>
+      <form method="GET" style={{ marginBottom: 28, position: 'relative', maxWidth: 480 }}>
         <Search
           size={15}
           style={{
@@ -93,37 +103,43 @@ export default async function ExplorePage({
           className="input"
           defaultValue={q ?? ''}
           placeholder="Search by name, city, or cuisine…"
-          style={{ paddingLeft: 36 }}
+          style={{ paddingLeft: 36, minHeight: 44, width: '100%' }}
         />
       </form>
 
       {/* Grid */}
       {typed.length === 0 ? (
-        <div className="card" style={{ padding: '48px 32px' }}>
+        <div className="card" style={{ padding: '48px 24px' }}>
           <p className="text-body" style={{ color: 'var(--ink-3)' }}>
             No restaurants found{q ? ` for "${q}"` : ''}.
           </p>
         </div>
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: 20,
-        }}>
-          {typed.map((r, i) => (
+        <div
+          className="restaurant-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            gap: 16,
+          }}
+        >
+          {typed.map((r) => (
             <Link
               key={r.id}
               href={`/restaurant/${r.id}`}
+              className="restaurant-card-link"
               style={{
                 textDecoration: 'none',
                 display: 'block',
-                transform: `rotate(${ROTATIONS[i % ROTATIONS.length]})`,
-                transformOrigin: 'center center',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               }}
-              className="card-link-wrapper"
             >
-              <div className="card" style={{ padding: 20 }}>
+              <div
+                className="card restaurant-card"
+                style={{
+                  padding: 20,
+                  transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+                }}
+              >
                 {/* Stars row */}
                 <div style={{
                   display: 'flex',
@@ -153,7 +169,7 @@ export default async function ExplorePage({
                   {r.city}{r.cuisine ? ` · ${r.cuisine}` : ''}
                 </p>
 
-                {/* Status indicator (placeholder — no live data yet) */}
+                {/* Status indicator */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span className="status-dot status-dot-unavailable" />
                   <span className="text-caption">Tracking</span>

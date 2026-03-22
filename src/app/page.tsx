@@ -92,6 +92,49 @@ export default function LandingPage() {
 
   return (
     <div style={{ background: 'var(--paper)', minHeight: '100vh' }}>
+      <style>{`
+        .hero-grid {
+          display: grid;
+          grid-template-columns: 1fr 420px;
+          gap: 64px;
+          align-items: start;
+        }
+        .value-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
+        }
+        .waitlist-form {
+          display: flex;
+          gap: 10px;
+          max-width: 440px;
+        }
+        .hero-preview-card {
+          display: block;
+        }
+        @media (max-width: 767px) {
+          .hero-grid {
+            grid-template-columns: 1fr;
+            gap: 32px;
+          }
+          .value-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+          .waitlist-form {
+            flex-direction: column;
+            max-width: 100%;
+          }
+          .waitlist-form .btn {
+            width: 100%;
+            justify-content: center;
+          }
+          .waitlist-form input {
+            width: 100%;
+          }
+        }
+      `}</style>
+
       {/* Nav */}
       <nav style={{
         borderBottom: '1px solid var(--line)',
@@ -103,8 +146,8 @@ export default function LandingPage() {
         <div style={{
           maxWidth: 1120,
           margin: '0 auto',
-          padding: '0 32px',
-          height: 56,
+          padding: '0 16px',
+          height: 52,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -131,16 +174,11 @@ export default function LandingPage() {
       <section style={{
         maxWidth: 1120,
         margin: '0 auto',
-        padding: '80px 32px 64px',
+        padding: '48px 16px 48px',
       }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 420px',
-          gap: 64,
-          alignItems: 'start',
-        }}>
+        <div className="hero-grid">
           {/* Left: Text + Form */}
-          <div style={{ maxWidth: 560 }}>
+          <div>
             <div style={{
               display: 'inline-block',
               background: 'var(--burgundy-bg)',
@@ -151,29 +189,29 @@ export default function LandingPage() {
               textTransform: 'uppercase',
               padding: '4px 12px',
               borderRadius: 999,
-              marginBottom: 24,
+              marginBottom: 20,
             }}>
               Michelin Restaurant Tracker
             </div>
 
             <h1 style={{
               fontFamily: 'Fraunces, Georgia, serif',
-              fontSize: 'clamp(32px, 4vw, 44px)',
+              fontSize: 'clamp(28px, 4vw, 44px)',
               fontWeight: 700,
               lineHeight: 1.08,
               letterSpacing: '-0.03em',
               color: 'var(--ink)',
-              marginBottom: 20,
+              marginBottom: 16,
             }}>
               Never miss a table at your favourite restaurant
             </h1>
 
             <p style={{
-              fontSize: 16,
+              fontSize: 15,
               lineHeight: 1.65,
               color: 'var(--ink-2)',
-              marginBottom: 40,
-              maxWidth: 440,
+              marginBottom: 32,
+              maxWidth: 480,
             }}>
               Mise watches Michelin-starred restaurants around the clock and alerts you the moment a reservation becomes available — for your date, time, and party size.
             </p>
@@ -191,7 +229,7 @@ export default function LandingPage() {
                 ✓ You&apos;re on the list. We&apos;ll be in touch soon.
               </div>
             ) : (
-              <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 10, maxWidth: 440 }}>
+              <form onSubmit={handleSubmit} className="waitlist-form">
                 <input
                   type="email"
                   placeholder="your@email.com"
@@ -199,13 +237,13 @@ export default function LandingPage() {
                   onChange={e => setEmail(e.target.value)}
                   required
                   className="input"
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, minHeight: 44 }}
                 />
                 <button
                   type="submit"
                   className="btn btn-primary"
                   disabled={loading}
-                  style={{ flexShrink: 0 }}
+                  style={{ flexShrink: 0, minHeight: 44 }}
                 >
                   {loading ? 'Joining…' : 'Join waitlist'}
                   {!loading && <ArrowRight size={14} />}
@@ -223,9 +261,9 @@ export default function LandingPage() {
           </div>
 
           {/* Right: Restaurant preview card */}
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card hero-preview-card" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{
-              padding: '16px 20px',
+              padding: '14px 18px',
               borderBottom: '1px solid var(--line)',
               display: 'flex',
               alignItems: 'center',
@@ -242,7 +280,7 @@ export default function LandingPage() {
               <span className="text-caption">5 restaurants</span>
             </div>
 
-            <div style={{ padding: '8px 0' }}>
+            <div style={{ padding: '6px 0' }}>
               {FEATURED_RESTAURANTS.map((r, i) => (
                 <div
                   key={i}
@@ -250,14 +288,14 @@ export default function LandingPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '12px 20px',
+                    padding: '10px 18px',
                     borderBottom: i < FEATURED_RESTAURANTS.length - 1 ? '1px solid var(--line)' : 'none',
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
                       fontFamily: 'Fraunces, Georgia, serif',
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: 500,
                       color: 'var(--ink)',
                       whiteSpace: 'nowrap',
@@ -278,7 +316,7 @@ export default function LandingPage() {
             </div>
 
             <div style={{
-              padding: '14px 20px',
+              padding: '12px 18px',
               background: 'var(--paper-dark)',
               borderTop: '1px solid var(--line)',
               display: 'flex',
@@ -295,7 +333,7 @@ export default function LandingPage() {
       </section>
 
       {/* Divider */}
-      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 32px' }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 16px' }}>
         <div className="divider" />
       </div>
 
@@ -303,7 +341,7 @@ export default function LandingPage() {
       <section style={{
         maxWidth: 1120,
         margin: '0 auto',
-        padding: '64px 32px',
+        padding: '48px 16px',
       }}>
         <h2 style={{
           fontFamily: 'Fraunces, Georgia, serif',
@@ -311,16 +349,12 @@ export default function LandingPage() {
           fontWeight: 600,
           color: 'var(--ink)',
           letterSpacing: '-0.02em',
-          marginBottom: 40,
+          marginBottom: 32,
         }}>
           How it works
         </h2>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 24,
-        }}>
+        <div className="value-grid">
           {VALUE_PROPS.map((vp, i) => (
             <div key={i} className="card" style={{ padding: 24 }}>
               <div style={{
@@ -356,8 +390,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer style={{
         borderTop: '1px solid var(--line)',
-        padding: '32px',
-        textAlign: 'left',
+        padding: '24px 16px',
       }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{

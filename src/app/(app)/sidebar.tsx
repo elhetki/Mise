@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Eye, Compass, CalendarCheck, Settings } from 'lucide-react'
+import { Eye, Compass, CalendarCheck, Settings, X } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/watchlist', label: 'Watchlist', icon: Eye },
@@ -11,10 +11,15 @@ const NAV_ITEMS = [
   { href: '/settings',  label: 'Settings',  icon: Settings },
 ]
 
-export default function AppSidebar() {
+interface AppSidebarProps {
+  mobileOpen?: boolean
+  onClose?: () => void
+}
+
+export default function AppSidebar({ mobileOpen = false, onClose }: AppSidebarProps) {
   const pathname = usePathname()
 
-  return (
+  const sidebarContent = (
     <aside style={{
       width: 220,
       flexShrink: 0,
@@ -23,14 +28,13 @@ export default function AppSidebar() {
       display: 'flex',
       flexDirection: 'column',
       padding: '24px 0',
-      position: 'sticky',
-      top: 0,
-      height: '100vh',
+      height: '100%',
     }}>
-      {/* Logo */}
-      <div style={{ padding: '0 20px 28px' }}>
+      {/* Logo + close button on mobile */}
+      <div style={{ padding: '0 20px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link
           href="/watchlist"
+          onClick={onClose}
           style={{
             fontFamily: 'Fraunces, Georgia, serif',
             fontSize: 22,
@@ -42,6 +46,16 @@ export default function AppSidebar() {
         >
           mise
         </Link>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="btn btn-ghost btn-sm"
+            style={{ padding: 6 }}
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* Divider */}
@@ -55,11 +69,12 @@ export default function AppSidebar() {
             <Link
               key={href}
               href={href}
+              onClick={onClose}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10,
-                padding: '9px 12px',
+                padding: '10px 12px',
                 borderRadius: 8,
                 marginBottom: 2,
                 fontSize: 14,
@@ -70,7 +85,7 @@ export default function AppSidebar() {
                 position: 'relative',
                 transition: 'background 0.15s ease, color 0.15s ease',
                 borderLeft: active ? '2px solid var(--burgundy)' : '2px solid transparent',
-                marginLeft: 0,
+                minHeight: 44,
               }}
             >
               <Icon size={16} strokeWidth={active ? 2 : 1.75} />
@@ -80,11 +95,51 @@ export default function AppSidebar() {
         })}
       </nav>
 
-      {/* Bottom: subtle version tag */}
+      {/* Bottom */}
       <div style={{ padding: '16px 24px 0' }}>
         <div className="divider" style={{ marginBottom: 16 }} />
         <span className="text-caption">mise · early access</span>
       </div>
     </aside>
+  )
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <div className="desktop-sidebar" style={{
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+      }}>
+        {sidebarContent}
+      </div>
+
+      {/* Mobile slide-over */}
+      {mobileOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={onClose}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.4)',
+              zIndex: 998,
+            }}
+          />
+          {/* Drawer */}
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: 240,
+            zIndex: 999,
+          }}>
+            {sidebarContent}
+          </div>
+        </>
+      )}
+    </>
   )
 }

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Watch, Restaurant } from '@/types'
 import Link from 'next/link'
 import { Star, Plus, Eye } from 'lucide-react'
+import WatchlistActions from './actions'
 
 type WatchWithRestaurant = Watch & { restaurant: Restaurant }
 
@@ -51,23 +52,36 @@ export default async function WatchlistPage() {
   const { data: watches } = await supabase
     .from('watches')
     .select('*, restaurant:restaurants(*)')
+    .in('status', ['active', 'paused'])
     .order('created_at', { ascending: false })
 
   const typedWatches = (watches ?? []) as WatchWithRestaurant[]
 
   return (
-    <div style={{ padding: '40px 48px', maxWidth: 900 }}>
+    <div style={{ padding: '28px 16px', maxWidth: 900 }}>
+      <style>{`
+        @media (min-width: 768px) {
+          .watchlist-container { padding: 40px 48px !important; }
+          .watchlist-header { flex-direction: row !important; align-items: center !important; }
+          .watchlist-header h1 { margin-bottom: 4px; }
+          .watchlist-header-add { margin-top: 0 !important; }
+        }
+      `}</style>
+
       {/* Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 32,
-      }}>
-        <div>
+      <div
+        className="watchlist-header"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          marginBottom: 28,
+        }}
+      >
+        <div style={{ flex: 1 }}>
           <h1 style={{
             fontFamily: 'Fraunces, Georgia, serif',
-            fontSize: 28,
+            fontSize: 26,
             fontWeight: 700,
             color: 'var(--ink)',
             letterSpacing: '-0.025em',
@@ -82,7 +96,11 @@ export default async function WatchlistPage() {
           </p>
         </div>
 
-        <Link href="/explore" className="btn btn-primary" style={{ gap: 6 }}>
+        <Link
+          href="/explore"
+          className="btn btn-primary watchlist-header-add"
+          style={{ gap: 6, alignSelf: 'flex-start', minHeight: 44 }}
+        >
           <Plus size={15} />
           Add watch
         </Link>
@@ -91,7 +109,7 @@ export default async function WatchlistPage() {
       {/* Empty state */}
       {typedWatches.length === 0 && (
         <div className="card" style={{
-          padding: '64px 48px',
+          padding: '48px 24px',
           textAlign: 'left',
           display: 'flex',
           flexDirection: 'column',
@@ -121,7 +139,7 @@ export default async function WatchlistPage() {
           <p className="text-body" style={{ color: 'var(--ink-3)', maxWidth: 320 }}>
             Start tracking a restaurant and we&apos;ll alert you the moment a table opens up.
           </p>
-          <Link href="/explore" className="btn btn-primary btn-sm" style={{ marginTop: 8 }}>
+          <Link href="/explore" className="btn btn-primary btn-sm" style={{ marginTop: 8, minHeight: 44 }}>
             Explore restaurants
           </Link>
         </div>
@@ -131,20 +149,22 @@ export default async function WatchlistPage() {
       {typedWatches.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {typedWatches.map((watch) => (
-            <div key={watch.id} className="card" style={{ padding: '20px 24px' }}>
+            <div key={watch.id} className="card" style={{ padding: '18px 20px' }}>
               <div style={{
                 display: 'flex',
                 alignItems: 'flex-start',
                 justifyContent: 'space-between',
-                gap: 16,
+                gap: 12,
+                flexWrap: 'wrap',
               }}>
                 {/* Left: restaurant info */}
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
                     marginBottom: 6,
+                    flexWrap: 'wrap',
                   }}>
                     <h3 style={{
                       fontFamily: 'Fraunces, Georgia, serif',
@@ -162,7 +182,7 @@ export default async function WatchlistPage() {
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 16,
+                    gap: 12,
                     flexWrap: 'wrap',
                   }}>
                     <span className="text-caption">
@@ -180,11 +200,16 @@ export default async function WatchlistPage() {
                   </div>
                 </div>
 
-                {/* Right: status */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                {/* Right: status + actions */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                   <StatusDot status={watch.status} />
                   <StatusLabel status={watch.status} />
                 </div>
+              </div>
+
+              {/* Action buttons */}
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)', display: 'flex', gap: 8 }}>
+                <WatchlistActions watchId={watch.id} currentStatus={watch.status} />
               </div>
             </div>
           ))}
