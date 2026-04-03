@@ -101,3 +101,18 @@ Set in Vercel dashboard (not committed):
 
 ## Deploy
 Push to `main` on `elhetki/Mise` → Vercel auto-deploys. No manual deploy needed.
+
+## Customer Data Protection (NON-NEGOTIABLE)
+
+These rules are absolute. No agent, no feature, no deadline overrides them:
+
+1. **NEVER delete customer data** — soft-delete only (add `deleted_at` timestamp)
+2. **NEVER modify customer settings** — read them, never overwrite on deploy or migration
+3. **NEVER drop columns that have data** — add new columns, deprecate old ones
+4. **NEVER change existing enum values** — add new ones, never rename or remove
+5. **ALWAYS set defaults for new columns** — existing rows must not break
+6. **ALWAYS verify RLS policies** — every table with customer data needs row-level security
+7. **ALWAYS test with existing data** — not just empty/fresh state
+
+If a migration touches existing data: document exactly what it changes and require explicit approval.
+If in doubt: **don't touch it, ask first.**

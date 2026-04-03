@@ -29,3 +29,12 @@ Mise is an impossible reservations platform — tracks the world's 50 hardest-to
 - Tock scraper not built (covers 9/50)
 - `scraper/config.ts` has old DACH mappings — needs update for new 50 restaurants
 - Availability data is static — scrapers needed for live status
+
+## Customer Data Protection (NON-NEGOTIABLE)
+1. NEVER delete customer data — soft-delete only
+2. NEVER modify customer settings on deploy/migration
+3. NEVER drop columns with data — add new, deprecate old
+4. NEVER change existing enum values — only add new ones
+5. ALWAYS set defaults for new columns
+6. ALWAYS verify RLS on customer data tables
+7. If in doubt: don't touch it, ask first

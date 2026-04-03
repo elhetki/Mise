@@ -17,6 +17,7 @@ Before any work:
 
 After any work:
 1. Run `npx next build` — must pass with zero errors
+2. Run post-build audit: `bash /root/.openclaw/workspace/skills/quality-gate/scripts/post-build-audit.sh .` — fix all errors
 2. Use existing CSS classes from The Sommelier design system (.card, .btn, .badge, etc.)
 
 Key rules:
