@@ -20,6 +20,14 @@ async function runScraper(config: any): Promise<ScraperResult> {
         const { OnepagebookingScraper } = await import('./scrapers/onepagebooking')
         return new OnepagebookingScraper(config).scrape()
       }
+      case 'opentable': {
+        const { OpenTableScraper } = await import('./scrapers/opentable')
+        return new OpenTableScraper(config).scrape()
+      }
+      case 'thefork': {
+        const { TheForkScraper } = await import('./scrapers/thefork')
+        return new TheForkScraper(config).scrape()
+      }
       default:
         return {
           restaurantId: config.id,
@@ -51,9 +59,7 @@ async function saveAvailability(result: ScraperResult): Promise<void> {
     return
   }
 
-  const simTag = result.simulated ? ' [SIMULATED]' : ''
-
-  // Insert each slot
+  // Upsert each slot (avoid duplicates on re-runs)
   const rows = result.slots.map((slot: AvailabilitySlot) => ({
     restaurant_id: result.restaurantId,
     date: slot.date,
@@ -63,12 +69,20 @@ async function saveAvailability(result: ScraperResult): Promise<void> {
     checked_at: result.scrapedAt.toISOString(),
   }))
 
-  const { error } = await supabase.from('availability').insert(rows)
-  if (error) {
-    console.error(`  DB error for ${result.restaurantName}:`, error.message)
-  } else {
-    console.log(`  ✅ ${result.restaurantName}: Saved ${rows.length} availability slots${simTag}`)
+  // Insert in batches of 50 to avoid payload limits
+  let saved = 0
+  for (let i = 0; i < rows.length; i += 50) {
+    const batch = rows.slice(i, i + 50)
+    const { error } = await supabase
+      .from('availability')
+      .upsert(batch, { onConflict: 'restaurant_id,date,time' })
+    if (error) {
+      console.error(`  DB error for ${result.restaurantName}:`, error.message)
+    } else {
+      saved += batch.length
+    }
   }
+  console.log(`  ✅ ${result.restaurantName}: Saved ${saved} real availability slots`)
 }
 
 async function main() {

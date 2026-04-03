@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { Booking, Restaurant } from '@/types'
+import { Booking, DbRestaurant } from '@/types'
 import { CalendarCheck } from 'lucide-react'
 
-type BookingWithRestaurant = Booking & { restaurant: Restaurant }
+type BookingWithRestaurant = Booking & { restaurant: DbRestaurant }
 
 function formatDate(s: string) {
   return new Date(s).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })

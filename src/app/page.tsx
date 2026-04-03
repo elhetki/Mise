@@ -5,28 +5,29 @@ import { Star, Bell, Clock, Eye, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 const FEATURED_RESTAURANTS = [
-  { name: 'The Table', city: 'Hamburg', stars: 3, status: 'unavailable' as const },
-  { name: 'Überfahrt', city: 'Rottach-Egern', stars: 3, status: 'unavailable' as const },
-  { name: 'Schwarzwaldstube', city: 'Baiersbronn', stars: 3, status: 'limited' as const },
-  { name: 'Vendôme', city: 'Bergisch Gladbach', stars: 3, status: 'unavailable' as const },
-  { name: 'Restaurant Amador', city: 'Wien', stars: 3, status: 'available' as const },
+  { name: 'Eleven Madison Park', city: 'New York', stars: 3, status: 'unavailable' as const },
+  { name: 'The Ledbury', city: 'London', stars: 3, status: 'unavailable' as const },
+  { name: 'Noma', city: 'Copenhagen', stars: 3, status: 'unavailable' as const },
+  { name: "Asador Etxebarri", city: 'Atxondo', stars: 1, status: 'unavailable' as const },
+  { name: 'Atomix', city: 'New York', stars: 2, status: 'limited' as const },
+  { name: 'Ikoyi', city: 'London', stars: 2, status: 'unavailable' as const },
 ]
 
 const VALUE_PROPS = [
   {
     icon: Eye,
     title: 'Continuous Monitoring',
-    desc: 'We check availability every few minutes so you don\'t have to.',
+    desc: 'We scan the world\'s hardest-to-book restaurants every few minutes — 24 hours a day, across every time zone.',
   },
   {
     icon: Bell,
     title: 'Instant Alerts',
-    desc: 'Get notified the moment a table opens at your target date and party size.',
+    desc: 'The moment a cancellation opens at your target restaurant, date, and party size — you\'re the first to know.',
   },
   {
     icon: Clock,
     title: 'Flexible Windows',
-    desc: 'Set a date range and time window. We\'ll find any opening that works for you.',
+    desc: 'Set a date range and time window. We\'ll catch any opening that fits — even if your plans are flexible.',
   },
 ]
 
@@ -188,7 +189,7 @@ export default function LandingPage() {
               color: 'var(--ink)',
               marginBottom: 16,
             }}>
-              Never miss a table at your favourite restaurant
+              The world&apos;s most impossible tables — tracked for you
             </h1>
 
             <p style={{
@@ -198,7 +199,7 @@ export default function LandingPage() {
               marginBottom: 32,
               maxWidth: 480,
             }}>
-              Mise watches Michelin-starred restaurants around the clock and alerts you the moment a reservation becomes available — for your date, time, and party size.
+              Mise monitors the 50 hardest-to-book restaurants on earth — from Noma to Asador Etxebarri — and alerts you the instant a cancellation opens. Your date. Your party size. Any city.
             </p>
 
             {submitted ? (
@@ -230,7 +231,7 @@ export default function LandingPage() {
                   disabled={loading}
                   style={{ flexShrink: 0, minHeight: 44 }}
                 >
-                  {loading ? 'Joining…' : 'Join waitlist'}
+                  {loading ? 'Joining…' : 'Get early access'}
                   {!loading && <ArrowRight size={14} />}
                 </button>
               </form>
@@ -241,7 +242,7 @@ export default function LandingPage() {
             )}
 
             <p style={{ color: 'var(--ink-4)', fontSize: 12, marginTop: 12 }}>
-              No spam. Early access only.
+              No spam. Early access only. 50 global restaurants tracked.
             </p>
           </div>
 
@@ -262,7 +263,7 @@ export default function LandingPage() {
               }}>
                 Watching now
               </span>
-              <span className="text-caption">5 restaurants</span>
+              <span className="text-caption">6 restaurants · 4 cities</span>
             </div>
 
             <div style={{ padding: '6px 0' }}>
@@ -291,7 +292,7 @@ export default function LandingPage() {
                       {r.name}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Stars count={r.stars} />
+                      {r.stars > 0 && <Stars count={r.stars} />}
                       <span className="text-caption">{r.city}</span>
                     </div>
                   </div>
@@ -310,7 +311,7 @@ export default function LandingPage() {
             }}>
               <div className="status-dot status-dot-available" />
               <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 500 }}>
-                Restaurant Amador just opened a table for 2
+                Atomix just released 2 tables for next Saturday
               </span>
             </div>
           </div>

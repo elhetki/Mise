@@ -2,12 +2,18 @@ import { chromium } from 'playwright'
 import { BaseScraper, ScraperResult, AvailabilitySlot } from './base'
 import type { RestaurantScraperConfig } from '../config'
 
-const PARTY_SIZES = [2, 4]
-const DAYS_AHEAD = 30
-
+/**
+ * Steirereck scraper — uses aleno.me booking widget via Playwright.
+ * 
+ * Strategy: Load the widget, click Buchen, intercept the timeslots API response.
+ * The API returns slots for multiple days in one call.
+ * The widget also serves Meierei im Stadtpark — we filter by restaurantName.
+ */
 export class SteirereckScraper extends BaseScraper {
   name = 'SteirereckScraper'
   private config: RestaurantScraperConfig
+
+  private readonly BOOKING_URL = 'https://mytools.aleno.me/reservations/v2.0/reservations.html?k=eyJrIjoid2l2dTVrM2lsNm15cnBiOWlwdzZ4bmViajhycnVkaWRpZ280bGZwODBsbzlhNGlweTEiLCJyIjoiM3k2Z1pLUDljYW1ibmliVEMiLCJzIjoiaHR0cHM6Ly9teXRvb2xzLmFsZW5vLm1lLyJ9'
 
   constructor(config: RestaurantScraperConfig) {
     super()
@@ -18,7 +24,7 @@ export class SteirereckScraper extends BaseScraper {
     const restaurantId = this.config.id
     const restaurantName = this.config.name
 
-    console.log(`  [Steirereck] Scraping ${restaurantName}...`)
+    console.log(`  [Steirereck] Scraping via aleno.me widget (browser)...`)
 
     const browser = await chromium.launch({ headless: true })
 
@@ -29,186 +35,128 @@ export class SteirereckScraper extends BaseScraper {
       })
       const page = await context.newPage()
 
-      console.log('  [Steirereck] Loading reservation page...')
-      await page.goto('https://www.steirereck.at/steirereck-tisch.html', {
-        timeout: 30000,
-        waitUntil: 'domcontentloaded',
-      })
+      // Collect timeslot responses
+      const collectedSlots: AlenoTimeslot[] = []
 
-      await randomDelay(2000, 3000)
-
-      const slots: AvailabilitySlot[] = []
-      const now = new Date()
-
-      // Steirereck uses a SPA booking system — check if there's an embedded calendar
-      // or if it redirects to a booking provider
-      const currentUrl = page.url()
-      console.log(`  [Steirereck] Current URL: ${currentUrl}`)
-
-      // Look for common booking widget elements
-      const hasIframe = await page.$('iframe')
-      const hasBookingForm = await page.$('form[class*="booking"],form[class*="reservation"],#booking,#reservation')
-      const hasDatePicker = await page.$('[type="date"],[class*="datepicker"],[class*="calendar"]')
-
-      console.log(`  [Steirereck] Has iframe: ${!!hasIframe}, booking form: ${!!hasBookingForm}, date picker: ${!!hasDatePicker}`)
-
-      if (hasIframe) {
-        // Try iframe-based booking
-        const iframeSrc = await hasIframe.getAttribute('src')
-        console.log(`  [Steirereck] Iframe src: ${iframeSrc}`)
-
-        const iframeFrame = await hasIframe.contentFrame()
-        if (iframeFrame) {
-          await randomDelay(1500, 2500)
-
-          for (const partySize of PARTY_SIZES) {
-            for (let i = 1; i <= Math.min(DAYS_AHEAD, 10); i++) {
-              const date = new Date(now)
-              date.setDate(now.getDate() + i)
-              const dateStr = date.toISOString().split('T')[0]
-
-              try {
-                // Try to select party size
-                const partySizeEl = await iframeFrame.$(`[value="${partySize}"],[data-party="${partySize}"]`)
-                if (partySizeEl) {
-                  await partySizeEl.click()
-                  await randomDelay(500, 1000)
+      page.on('response', async (response) => {
+        if (response.url().includes('/api/aleno/v1/popup/timeslots') && response.status() === 200) {
+          try {
+            const data = await response.json()
+            for (const [, slots] of Object.entries(data?.bookings || {})) {
+              for (const slot of slots as AlenoTimeslot[]) {
+                // Only Steirereck — not Meierei im Stadtpark
+                if (slot.restaurantName === 'Steirereck') {
+                  collectedSlots.push(slot)
                 }
-
-                // Try to set date
-                const dateInput = await iframeFrame.$('input[type="date"]')
-                if (dateInput) {
-                  await dateInput.fill(dateStr)
-                  await randomDelay(1000, 2000)
-                }
-
-                // Look for time slots
-                const timeEls = await iframeFrame.$$('[class*="time"],[class*="slot"],[data-time]')
-                for (const el of timeEls) {
-                  const text = await el.textContent()
-                  if (text && /\d{1,2}:\d{2}/.test(text)) {
-                    const match = text.match(/(\d{1,2}:\d{2})/)
-                    if (match) {
-                      const time = match[1].padStart(5, '0')
-                      const existing = slots.find(s => s.date === dateStr && s.time === time)
-                      if (existing) {
-                        if (!existing.partySizes.includes(partySize)) {
-                          existing.partySizes.push(partySize)
-                        }
-                      } else {
-                        slots.push({ date: dateStr, time, partySizes: [partySize] })
-                      }
-                    }
-                  }
-                }
-              } catch {
-                // Skip
               }
             }
-          }
+          } catch { /* ignore */ }
+        }
+      })
+
+      // Load widget
+      console.log(`  [Steirereck] Loading aleno widget...`)
+      await page.goto(this.BOOKING_URL, { timeout: 30000, waitUntil: 'networkidle' })
+      await randomDelay(1500, 2500)
+
+      // Click Buchen — this triggers the timeslots API with default date (today/tomorrow)
+      const buchen = await page.waitForSelector('button:has-text("Buchen")', { timeout: 10000 }).catch(() => null)
+      if (buchen) {
+        await buchen.click({ force: true })
+        await page.waitForTimeout(3000)
+      }
+
+      // Now try different party sizes. We need to go back and change party size.
+      // Reload with party size 4 to check that too
+      const collectedSlots4: AlenoTimeslot[] = []
+
+      page.removeAllListeners('response')
+      page.on('response', async (response) => {
+        if (response.url().includes('/api/aleno/v1/popup/timeslots') && response.status() === 200) {
+          try {
+            const data = await response.json()
+            for (const [, slots] of Object.entries(data?.bookings || {})) {
+              for (const slot of slots as AlenoTimeslot[]) {
+                if (slot.restaurantName === 'Steirereck') {
+                  collectedSlots4.push(slot)
+                }
+              }
+            }
+          } catch { /* ignore */ }
+        }
+      })
+
+      // Reload widget fresh and set party to 4
+      await page.goto(this.BOOKING_URL, { timeout: 30000, waitUntil: 'networkidle' })
+      await randomDelay(1500, 2500)
+
+      // Try to change party size to 4
+      const personenBtn = await page.$('button:has-text("für 2")')
+      if (personenBtn) {
+        await personenBtn.click()
+        await randomDelay(500, 1000)
+        // Look for the option in the dropdown
+        const opt4 = await page.$('text="4"')
+        if (opt4) {
+          await opt4.click()
+          await randomDelay(500, 1000)
         }
       }
 
-      // If no slots found via browser interaction, try API detection approach
-      if (slots.length === 0) {
-        console.log('  [Steirereck] No slots via browser. Checking for API calls...')
-
-        // Intercept network requests to find booking API
-        const apiResponses: Array<{ url: string; body: string }> = []
-        page.on('response', async (response) => {
-          const url = response.url()
-          if (
-            url.includes('api') ||
-            url.includes('availability') ||
-            url.includes('booking') ||
-            url.includes('reservation')
-          ) {
-            try {
-              const body = await response.text()
-              if (body.includes('time') || body.includes('slot') || body.includes('available')) {
-                apiResponses.push({ url, body: body.slice(0, 2000) })
-              }
-            } catch {
-              // ignore
-            }
-          }
-        })
-
-        // Reload and interact to trigger API calls
-        await page.reload({ timeout: 20000, waitUntil: 'domcontentloaded' })
-        await randomDelay(3000, 4000)
-
-        // Try clicking on date elements to trigger availability requests
-        const dateEl = await page.$('[type="date"],[class*="date"],[id*="date"]')
-        if (dateEl) {
-          await dateEl.click()
-          await randomDelay(2000, 3000)
-        }
-
-        if (apiResponses.length > 0) {
-          console.log(`  [Steirereck] Found ${apiResponses.length} API responses, parsing...`)
-          for (const resp of apiResponses.slice(0, 5)) {
-            try {
-              const data = JSON.parse(resp.body)
-              const parsed = extractSlotsFromApiResponse(data, restaurantId, now)
-              slots.push(...parsed)
-            } catch {
-              // Not JSON or unparseable
-            }
-          }
-        }
+      const buchen2 = await page.waitForSelector('button:has-text("Buchen")', { timeout: 5000 }).catch(() => null)
+      if (buchen2) {
+        await buchen2.click({ force: true })
+        await page.waitForTimeout(3000)
       }
 
       await context.close()
 
-      if (slots.length > 0) {
-        console.log(`  [Steirereck] Found ${slots.length} real slots`)
-        return { restaurantId, restaurantName, slots, scrapedAt: new Date() }
+      // Process all collected slots
+      const slots: AvailabilitySlot[] = []
+
+      const processSlot = (ts: AlenoTimeslot, partySize: number) => {
+        if (ts.timeslotFull) return
+        if (ts.isUnavailableReason) return
+
+        const slotDate = ts.selectedDate.split('T')[0]
+        const utcDate = new Date(ts.selectedDate)
+        const hours = utcDate.getUTCHours().toString().padStart(2, '0')
+        const mins = utcDate.getUTCMinutes().toString().padStart(2, '0')
+        const slotTime = `${hours}:${mins}`
+
+        const existing = slots.find(s => s.date === slotDate && s.time === slotTime)
+        if (existing) {
+          if (!existing.partySizes.includes(partySize)) {
+            existing.partySizes.push(partySize)
+          }
+        } else {
+          slots.push({ date: slotDate, time: slotTime, partySizes: [partySize] })
+        }
       }
 
-      // Fall back to simulation
-      console.log('  [Steirereck] No real slots found, using simulation')
-      return this.simulateAvailability(restaurantId, restaurantName)
+      for (const ts of collectedSlots) processSlot(ts, 2)
+      for (const ts of collectedSlots4) processSlot(ts, 4)
+
+      console.log(`  [Steirereck] Found ${slots.length} real slots (from ${collectedSlots.length} p2 + ${collectedSlots4.length} p4 raw)`)
+      return { restaurantId, restaurantName, slots, scrapedAt: new Date() }
     } catch (err) {
-      console.log(`  [Steirereck] Error: ${err}. Using simulation.`)
-      await browser.close()
-      return this.simulateAvailability(restaurantId, restaurantName)
+      console.error(`  [Steirereck] Error: ${err}`)
+      return { restaurantId, restaurantName, slots: [], scrapedAt: new Date(), error: String(err) }
     } finally {
       try { await browser.close() } catch { /* already closed */ }
     }
   }
 }
 
-function extractSlotsFromApiResponse(data: any, _restaurantId: string, now: Date): AvailabilitySlot[] {
-  const slots: AvailabilitySlot[] = []
-
-  // Try common response formats
-  const items = Array.isArray(data) ? data : data?.slots || data?.availability || data?.times || []
-
-  for (const item of items) {
-    if (typeof item === 'string' && /\d{4}-\d{2}-\d{2}/.test(item)) {
-      // Date string
-      const dateMatch = item.match(/(\d{4}-\d{2}-\d{2})/)
-      const timeMatch = item.match(/(\d{2}:\d{2})/)
-      if (dateMatch && timeMatch) {
-        slots.push({ date: dateMatch[1], time: timeMatch[1], partySizes: [2, 4] })
-      }
-    } else if (typeof item === 'object' && item) {
-      const date = item.date || item.day || item.booking_date
-      const time = item.time || item.start_time || item.booking_time
-      const partySizes = item.party_sizes || item.covers || [2, 4]
-
-      if (date && time) {
-        const dateStr = typeof date === 'string' ? date.split('T')[0] : String(date)
-        const timeStr = typeof time === 'string' ? time.slice(0, 5) : String(time)
-        slots.push({ date: dateStr, time: timeStr, partySizes: Array.isArray(partySizes) ? partySizes : [2, 4] })
-      }
-    }
-  }
-
-  // Validate dates are in the future
-  const nowStr = now.toISOString().split('T')[0]
-  return slots.filter(s => s.date >= nowStr)
+interface AlenoTimeslot {
+  restaurantId: string
+  restaurantName: string
+  selectedDate: string
+  shiftName: string
+  timeslotFull: boolean
+  timeslotAlmostFull: number
+  isUnavailableReason: string | null
+  peopleCount: number
 }
 
 function randomDelay(minMs: number, maxMs: number): Promise<void> {

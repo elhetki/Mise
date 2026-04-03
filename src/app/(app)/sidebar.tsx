@@ -116,7 +116,7 @@ export default function AppSidebar({ mobileOpen = false, onClose, unreadCount = 
       {/* Bottom */}
       <div style={{ padding: '16px 24px 0' }}>
         <div className="divider" style={{ marginBottom: 16 }} />
-        <span className="text-caption">mise · early access</span>
+        <span className="text-caption">mise · 50 global restaurants</span>
       </div>
     </aside>
   )

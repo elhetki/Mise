@@ -1,4 +1,39 @@
+export type BookingPlatform = 'resy' | 'tock' | 'sevenrooms' | 'opentable' | 'thefork' | 'direct' | 'phone'
+export type AvailabilityStatus = 'available' | 'limited' | 'unavailable' | 'unknown'
+
 export interface Restaurant {
+  id: string
+  name: string
+  city: string
+  country: string
+  cuisine: string
+  michelinStars: number
+  bookingPlatform: BookingPlatform
+  typicalWait: string
+  priceRange: string
+  description: string
+  availabilityStatus: AvailabilityStatus
+  imageUrl?: string
+}
+
+// ── Supabase DB types (used for watches, bookings, notifications) ──────────
+
+export interface Watch {
+  id: string
+  user_id: string
+  restaurant_id: string
+  date_from: string
+  date_to: string
+  time_from: string
+  time_to: string
+  party_size: number
+  flexibility: 'exact' | 'plus_minus_1' | 'plus_minus_3' | 'any_in_range'
+  auto_book: boolean
+  status: 'active' | 'paused' | 'fulfilled' | 'expired'
+  created_at: string
+}
+
+export interface DbRestaurant {
   id: string
   name: string
   city: string
@@ -14,23 +49,6 @@ export interface Restaurant {
   lng: number | null
   active: boolean
   created_at: string
-}
-
-export interface Watch {
-  id: string
-  user_id: string
-  restaurant_id: string
-  date_from: string
-  date_to: string
-  time_from: string
-  time_to: string
-  party_size: number
-  flexibility: 'exact' | 'plus_minus_1' | 'plus_minus_3' | 'any_in_range'
-  auto_book: boolean
-  status: 'active' | 'paused' | 'fulfilled' | 'expired'
-  created_at: string
-  // Joined
-  restaurant?: Restaurant
 }
 
 export interface Availability {
@@ -70,5 +88,5 @@ export interface Booking {
   notes: string | null
   created_at: string
   // Joined
-  restaurant?: Restaurant
+  restaurant?: DbRestaurant
 }

@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { Watch, Restaurant } from '@/types'
+import { Watch, DbRestaurant } from '@/types'
 import Link from 'next/link'
 import { Star, Plus, Eye } from 'lucide-react'
 import WatchlistActions from './actions'
 
-type WatchWithRestaurant = Watch & { restaurant: Restaurant }
+type WatchWithRestaurant = Watch & { restaurant: DbRestaurant }
 
 function Stars({ count }: { count: number }) {
   return (
