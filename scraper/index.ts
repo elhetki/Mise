@@ -1,40 +1,40 @@
-import { getScrapableConfigs } from './config'
-import { supabase } from './supabase'
-import { matchAvailability } from './matcher'
-import { notifyMatches } from './notifier'
-import type { ScraperResult, AvailabilitySlot } from './scrapers/base'
-import type { RestaurantScraperConfig } from './config'
+import { getScrapableConfigs } from './config.js'
+import { supabase } from './supabase.js'
+import { matchAvailability } from './matcher.js'
+import { notifyMatches } from './notifier.js'
+import type { ScraperResult, AvailabilitySlot } from './scrapers/base.js'
+import type { RestaurantScraperConfig } from './config.js'
 
 // Import scrapers dynamically based on type
 async function runScraper(config: RestaurantScraperConfig): Promise<ScraperResult> {
   try {
     switch (config.type) {
       case 'resy': {
-        const { ResyScraper } = await import('./scrapers/resy')
+        const { ResyScraper } = await import('./scrapers/resy.js')
         return new ResyScraper(config).scrape()
       }
       case 'tock': {
-        const { TockScraper } = await import('./scrapers/tock')
+        const { TockScraper } = await import('./scrapers/tock.js')
         return new TockScraper(config).scrape()
       }
       case 'formitable': {
-        const { FormitableScraper } = await import('./scrapers/formitable')
+        const { FormitableScraper } = await import('./scrapers/formitable.js')
         return new FormitableScraper(config).scrape()
       }
       case 'steirereck': {
-        const { SteirereckScraper } = await import('./scrapers/steirereck')
+        const { SteirereckScraper } = await import('./scrapers/steirereck.js')
         return new SteirereckScraper(config).scrape()
       }
       case 'onepagebooking': {
-        const { OnepagebookingScraper } = await import('./scrapers/onepagebooking')
+        const { OnepagebookingScraper } = await import('./scrapers/onepagebooking.js')
         return new OnepagebookingScraper(config).scrape()
       }
       case 'opentable': {
-        const { OpenTableScraper } = await import('./scrapers/opentable')
+        const { OpenTableScraper } = await import('./scrapers/opentable.js')
         return new OpenTableScraper(config).scrape()
       }
       case 'thefork': {
-        const { TheForkScraper } = await import('./scrapers/thefork')
+        const { TheForkScraper } = await import('./scrapers/thefork.js')
         return new TheForkScraper(config).scrape()
       }
       default:

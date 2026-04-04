@@ -1,5 +1,5 @@
 import { chromium } from 'playwright'
-import { BaseScraper, ScraperResult, AvailabilitySlot } from './base'
+import { BaseScraper, ScraperResult, AvailabilitySlot } from './base.js'
 import type { RestaurantScraperConfig } from '../config'
 
 /**

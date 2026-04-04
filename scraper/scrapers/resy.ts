@@ -1,10 +1,32 @@
-import { BaseScraper, ScraperResult, AvailabilitySlot } from './base'
+import { BaseScraper, ScraperResult, AvailabilitySlot } from './base.js'
 import type { RestaurantScraperConfig } from '../config'
 
 const PARTY_SIZES = [2, 4]
 const DAYS_AHEAD = 30
 
 const RESY_API_KEY = 'VbWk7s3L4KiK5fzlO7JD3Q5EYolJI7n5'
+
+/**
+ * Pre-resolved venue IDs from Resy search API.
+ * Key: resySlug from config, value: numeric venue_id.
+ * These were resolved via the POST /3/venuesearch/search endpoint.
+ */
+const KNOWN_VENUE_IDS: Record<string, number> = {
+  // NYC
+  'eleven-madison-park': 70928,
+  'le-bernardin': 1387,
+  'carbone-new-york': 6194,
+  'via-carota': 2567,
+  'lartusi': 25973,
+  'tatiana': 65452,
+  'torrisi-new-york': 64593,
+  'le-pavillon-new-york': 50955,
+  'daniel-new-york': 29947,
+  'the-four-horsemen': 2492,
+  '4-charles-prime-rib': 834,
+  // London (venue IDs to be discovered when Resy London API is accessible)
+  // For now, London restaurants will fall back to simulation
+}
 
 const RESY_HEADERS = {
   'Authorization': `ResyAPI api_key="${RESY_API_KEY}"`,
@@ -64,23 +86,50 @@ export class ResyScraper extends BaseScraper {
     }
   }
 
-  private async getVenueId(slug: string, location: string): Promise<number | null> {
+  private async getVenueId(slug: string, _location: string): Promise<number | null> {
+    // Check pre-resolved IDs first (fast path, no API call)
+    if (KNOWN_VENUE_IDS[slug] !== undefined) {
+      return KNOWN_VENUE_IDS[slug]
+    }
+
+    // Try the venue search API as fallback
     await randomDelay(500, 1000)
 
-    const url = `https://api.resy.com/3/venue?url_slug=${encodeURIComponent(slug)}&location=${encodeURIComponent(location)}`
-
     try {
-      const res = await fetch(url, { headers: RESY_HEADERS })
+      const res = await fetch('https://api.resy.com/3/venuesearch/search', {
+        method: 'POST',
+        headers: { ...RESY_HEADERS, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: slug.replace(/-/g, ' '),
+          slot_filter: {
+            day: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            party_size: 2,
+          },
+        }),
+      })
 
       if (!res.ok) {
-        console.log(`  [Resy] Venue lookup HTTP ${res.status} for slug=${slug}`)
+        console.log(`  [Resy] Venue search HTTP ${res.status} for slug=${slug}`)
         return null
       }
 
-      const data = await res.json() as ResyVenueResponse
-      return data?.id?.resy ?? null
+      const data = await res.json() as ResySearchResponse
+      const hits = data?.search?.hits ?? []
+
+      // Find exact slug match
+      const exact = hits.find(h => h.url_slug === slug)
+      if (exact) return exact.id.resy
+
+      // Find name match
+      const nameMatch = hits.find(h =>
+        h.name.toLowerCase().includes(slug.replace(/-/g, ' ').toLowerCase()) ||
+        slug.replace(/-/g, ' ').toLowerCase().includes(h.name.toLowerCase())
+      )
+      if (nameMatch) return nameMatch.id.resy
+
+      return null
     } catch (err) {
-      console.log(`  [Resy] Venue lookup error: ${err}`)
+      console.log(`  [Resy] Venue search error: ${err}`)
       return null
     }
   }
@@ -145,6 +194,16 @@ interface ResyVenueResponse {
     resy: number
   }
   name: string
+}
+
+interface ResySearchResponse {
+  search: {
+    hits: Array<{
+      id: { resy: number }
+      name: string
+      url_slug: string
+    }>
+  }
 }
 
 interface ResyFindResponse {

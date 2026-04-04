@@ -1,4 +1,4 @@
-import { BaseScraper, ScraperResult, AvailabilitySlot } from './base'
+import { BaseScraper, ScraperResult, AvailabilitySlot } from './base.js'
 import type { RestaurantScraperConfig } from '../config'
 
 const PARTY_SIZES = [2, 4]
