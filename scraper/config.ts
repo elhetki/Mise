@@ -1,187 +1,493 @@
+/**
+ * scraper/config.ts — Restaurant → scraper mapping for Mise
+ *
+ * All 50 restaurants from src/lib/restaurants.ts are mapped here.
+ * IDs match the UUIDs inserted via migration.
+ *
+ * Booking platforms:
+ *   resy     → ResyScraper (22 restaurants)
+ *   tock     → TockScraper (9 restaurants)
+ *   direct   → no scraper (direct booking via restaurant website)
+ *   phone    → no scraper
+ *   sevenrooms → no scraper (yet)
+ */
+
 export interface RestaurantScraperConfig {
-  id: string // UUID from restaurants table
+  id: string             // UUID from restaurants table
   name: string
-  type: 'formitable' | 'steirereck' | 'onepagebooking' | 'opentable' | 'thefork' | 'phone_only' | 'email_only'
+  restaurantSlug: string // slug from restaurants.ts (used as the unique key)
+  type: ScraperType
   url: string
-  // Additional config per type
-  formitableSlug?: string   // Formitable/Zenchef restaurant UID
-  onepagebookingId?: string
-  alenoKey?: string         // Aleno widget key
+  // Resy-specific
+  resySlug?: string
+  resyCity?: string
+  // Tock-specific
+  tockSlug?: string
+  // Legacy scrapers
+  formitableSlug?: string
+  alenoKey?: string
   alenoRestaurantId?: string
-  opentableSlug?: string    // OpenTable URL slug (e.g. "the-table-kevin-fehling-hamburg")
-  theforkId?: string        // TheFork restaurant ID (from URL: /restaurant/r{ID})
+  opentableSlug?: string
+  theforkId?: string
+  onepagebookingId?: string
+}
+
+export type ScraperType =
+  | 'resy'
+  | 'tock'
+  | 'formitable'
+  | 'steirereck'
+  | 'onepagebooking'
+  | 'opentable'
+  | 'thefork'
+  | 'phone_only'
+  | 'email_only'
+  | 'direct_only'
+
+/**
+ * Static list of all 50 restaurant configs.
+ * The `id` field matches the UUIDs inserted into Supabase.
+ */
+const STATIC_CONFIGS: RestaurantScraperConfig[] = [
+  // ── NYC — Resy ──────────────────────────────────────────────────────────
+  {
+    id: '11111111-0001-0000-0000-000000000001',
+    name: 'Eleven Madison Park',
+    restaurantSlug: 'eleven-madison-park',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/eleven-madison-park',
+    resySlug: 'eleven-madison-park',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0002-0000-0000-000000000001',
+    name: 'Le Bernardin',
+    restaurantSlug: 'le-bernardin',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/le-bernardin',
+    resySlug: 'le-bernardin',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0007-0000-0000-000000000001',
+    name: 'Jungsik',
+    restaurantSlug: 'jungsik',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/jungsik',
+    resySlug: 'jungsik',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0010-0000-0000-000000000001',
+    name: 'Don Angie',
+    restaurantSlug: 'don-angie',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/don-angie',
+    resySlug: 'don-angie',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0011-0000-0000-000000000001',
+    name: '4 Charles Prime Rib',
+    restaurantSlug: '4-charles-prime-rib',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/4-charles-prime-rib',
+    resySlug: '4-charles-prime-rib',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0012-0000-0000-000000000001',
+    name: 'Carbone',
+    restaurantSlug: 'carbone',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/carbone-new-york',
+    resySlug: 'carbone-new-york',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0014-0000-0000-000000000001',
+    name: 'Via Carota',
+    restaurantSlug: 'via-carota',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/via-carota',
+    resySlug: 'via-carota',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0015-0000-0000-000000000001',
+    name: "L'Artusi",
+    restaurantSlug: 'lartusi',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/lartusi',
+    resySlug: 'lartusi',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0016-0000-0000-000000000001',
+    name: 'Tatiana',
+    restaurantSlug: 'tatiana',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/tatiana',
+    resySlug: 'tatiana',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0017-0000-0000-000000000001',
+    name: 'Torrisi',
+    restaurantSlug: 'torrisi',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/torrisi-new-york',
+    resySlug: 'torrisi-new-york',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0018-0000-0000-000000000001',
+    name: 'Le Pavillon',
+    restaurantSlug: 'le-pavillon',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/le-pavillon-new-york',
+    resySlug: 'le-pavillon-new-york',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0019-0000-0000-000000000001',
+    name: 'Daniel',
+    restaurantSlug: 'daniel',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/daniel-new-york',
+    resySlug: 'daniel-new-york',
+    resyCity: 'new-york-city',
+  },
+  {
+    id: '11111111-0020-0000-0000-000000000001',
+    name: 'The Four Horsemen',
+    restaurantSlug: 'the-four-horsemen',
+    type: 'resy',
+    url: 'https://resy.com/cities/new-york-city/the-four-horsemen',
+    resySlug: 'the-four-horsemen',
+    resyCity: 'new-york-city',
+  },
+
+  // ── London — Resy ───────────────────────────────────────────────────────
+  {
+    id: '11111111-0021-0000-0000-000000000001',
+    name: 'The Ledbury',
+    restaurantSlug: 'the-ledbury',
+    type: 'resy',
+    url: 'https://resy.com/cities/london/the-ledbury',
+    resySlug: 'the-ledbury',
+    resyCity: 'london',
+  },
+  {
+    id: '11111111-0024-0000-0000-000000000001',
+    name: 'Ikoyi',
+    restaurantSlug: 'ikoyi',
+    type: 'resy',
+    url: 'https://resy.com/cities/london/ikoyi-london',
+    resySlug: 'ikoyi-london',
+    resyCity: 'london',
+  },
+  {
+    id: '11111111-0025-0000-0000-000000000001',
+    name: 'Da Terra',
+    restaurantSlug: 'da-terra',
+    type: 'resy',
+    url: 'https://resy.com/cities/london/da-terra',
+    resySlug: 'da-terra',
+    resyCity: 'london',
+  },
+  {
+    id: '11111111-0026-0000-0000-000000000001',
+    name: 'Kitchen Table',
+    restaurantSlug: 'kitchen-table',
+    type: 'resy',
+    url: 'https://resy.com/cities/london/kitchen-table-london',
+    resySlug: 'kitchen-table-london',
+    resyCity: 'london',
+  },
+  {
+    id: '11111111-0028-0000-0000-000000000001',
+    name: 'Brat',
+    restaurantSlug: 'brat',
+    type: 'resy',
+    url: 'https://resy.com/cities/london/brat-london',
+    resySlug: 'brat-london',
+    resyCity: 'london',
+  },
+  {
+    id: '11111111-0029-0000-0000-000000000001',
+    name: 'The Clove Club',
+    restaurantSlug: 'the-clove-club',
+    type: 'resy',
+    url: 'https://resy.com/cities/london/the-clove-club',
+    resySlug: 'the-clove-club',
+    resyCity: 'london',
+  },
+  {
+    id: '11111111-0030-0000-0000-000000000001',
+    name: "Lyle's",
+    restaurantSlug: 'lyles',
+    type: 'resy',
+    url: 'https://resy.com/cities/london/lyles-london',
+    resySlug: 'lyles-london',
+    resyCity: 'london',
+  },
+  {
+    id: '11111111-0034-0000-0000-000000000001',
+    name: 'Noble Rot Soho',
+    restaurantSlug: 'noble-rot-soho',
+    type: 'resy',
+    url: 'https://resy.com/cities/london/noble-rot-london',
+    resySlug: 'noble-rot-london',
+    resyCity: 'london',
+  },
+
+  // ── NYC — Tock ──────────────────────────────────────────────────────────
+  {
+    id: '11111111-0004-0000-0000-000000000001',
+    name: 'Per Se',
+    restaurantSlug: 'per-se',
+    type: 'tock',
+    url: 'https://www.exploretock.com/perse',
+    tockSlug: 'perse',
+  },
+  {
+    id: '11111111-0005-0000-0000-000000000001',
+    name: "Chef's Table at Brooklyn Fare",
+    restaurantSlug: 'chefs-table-brooklyn-fare',
+    type: 'tock',
+    url: 'https://www.exploretock.com/chefsatbrooklynfare',
+    tockSlug: 'chefsatbrooklynfare',
+  },
+  {
+    id: '11111111-0006-0000-0000-000000000001',
+    name: 'Atomix',
+    restaurantSlug: 'atomix',
+    type: 'tock',
+    url: 'https://www.exploretock.com/atomix',
+    tockSlug: 'atomix',
+  },
+  {
+    id: '11111111-0008-0000-0000-000000000001',
+    name: 'Odo',
+    restaurantSlug: 'odo',
+    type: 'tock',
+    url: 'https://www.exploretock.com/odo',
+    tockSlug: 'odo',
+  },
+  {
+    id: '11111111-0009-0000-0000-000000000001',
+    name: "The Chef's Counter at Noda",
+    restaurantSlug: 'chefs-counter-noda',
+    type: 'tock',
+    url: 'https://www.exploretock.com/noda',
+    tockSlug: 'noda',
+  },
+
+  // ── World — Tock ────────────────────────────────────────────────────────
+  {
+    id: '11111111-0045-0000-0000-000000000001',
+    name: 'Pujol',
+    restaurantSlug: 'pujol',
+    type: 'tock',
+    url: 'https://www.exploretock.com/pujol',
+    tockSlug: 'pujol',
+  },
+  {
+    id: '11111111-0046-0000-0000-000000000001',
+    name: 'Geranium',
+    restaurantSlug: 'geranium',
+    type: 'tock',
+    url: 'https://www.exploretock.com/geranium',
+    tockSlug: 'geranium',
+  },
+  {
+    id: '11111111-0047-0000-0000-000000000001',
+    name: 'Alchemist',
+    restaurantSlug: 'alchemist',
+    type: 'tock',
+    url: 'https://www.exploretock.com/alchemist-copenhagen',
+    tockSlug: 'alchemist-copenhagen',
+  },
+  {
+    id: '11111111-0048-0000-0000-000000000001',
+    name: 'Frantzén',
+    restaurantSlug: 'frantzen',
+    type: 'tock',
+    url: 'https://www.exploretock.com/frantzen',
+    tockSlug: 'frantzen',
+  },
+  {
+    id: '11111111-0049-0000-0000-000000000001',
+    name: 'DiverXO',
+    restaurantSlug: 'diverxo',
+    type: 'tock',
+    url: 'https://www.exploretock.com/diverxo',
+    tockSlug: 'diverxo',
+  },
+
+  // ── No scraper — phone only ──────────────────────────────────────────────
+  {
+    id: '11111111-0003-0000-0000-000000000001',
+    name: 'Masa',
+    restaurantSlug: 'masa',
+    type: 'phone_only',
+    url: 'https://www.masanyc.com/',
+  },
+  {
+    id: '11111111-0013-0000-0000-000000000001',
+    name: 'I Sodi',
+    restaurantSlug: 'i-sodi',
+    type: 'phone_only',
+    url: 'https://www.isodinyc.com/',
+  },
+  {
+    id: '11111111-0033-0000-0000-000000000001',
+    name: 'River Café',
+    restaurantSlug: 'river-cafe',
+    type: 'phone_only',
+    url: 'https://www.rivercafe.co.uk/',
+  },
+  {
+    id: '11111111-0050-0000-0000-000000000001',
+    name: 'Asador Etxebarri',
+    restaurantSlug: 'asador-etxebarri',
+    type: 'phone_only',
+    url: 'https://asadoretxebarri.com/',
+  },
+
+  // ── No scraper — direct booking ──────────────────────────────────────────
+  {
+    id: '11111111-0022-0000-0000-000000000001',
+    name: 'Sketch (Lecture Room)',
+    restaurantSlug: 'sketch-lecture-room',
+    type: 'direct_only',
+    url: 'https://www.sketch.london/',
+  },
+  {
+    id: '11111111-0023-0000-0000-000000000001',
+    name: 'Core by Clare Smyth',
+    restaurantSlug: 'core-by-clare-smyth',
+    type: 'direct_only',
+    url: 'https://www.corebyclaresmyth.com/',
+  },
+  {
+    id: '11111111-0027-0000-0000-000000000001',
+    name: 'A. Wong',
+    restaurantSlug: 'a-wong',
+    type: 'direct_only',
+    url: 'https://www.awong.co.uk/',
+  },
+  {
+    id: '11111111-0031-0000-0000-000000000001',
+    name: 'St. John',
+    restaurantSlug: 'st-john',
+    type: 'direct_only',
+    url: 'https://stjohnrestaurant.com/',
+  },
+  {
+    id: '11111111-0032-0000-0000-000000000001',
+    name: 'Rochelle Canteen',
+    restaurantSlug: 'rochelle-canteen',
+    type: 'direct_only',
+    url: 'https://arnoldandhenderson.com/rochelle-canteen/',
+  },
+  {
+    id: '11111111-0035-0000-0000-000000000001',
+    name: "Brat x Climpson's Arch",
+    restaurantSlug: 'brat-shoreditch-roof',
+    type: 'direct_only',
+    url: 'https://bratrestaurant.com/',
+  },
+  {
+    id: '11111111-0036-0000-0000-000000000001',
+    name: 'Noma',
+    restaurantSlug: 'noma',
+    type: 'direct_only',
+    url: 'https://noma.dk/',
+  },
+  {
+    id: '11111111-0037-0000-0000-000000000001',
+    name: 'Osteria Francescana',
+    restaurantSlug: 'osteria-francescana',
+    type: 'direct_only',
+    url: 'https://www.osteriafrancescana.it/',
+  },
+  {
+    id: '11111111-0038-0000-0000-000000000001',
+    name: 'Mirazur',
+    restaurantSlug: 'mirazur',
+    type: 'direct_only',
+    url: 'https://www.mirazur.fr/',
+  },
+  {
+    id: '11111111-0039-0000-0000-000000000001',
+    name: 'Central',
+    restaurantSlug: 'central',
+    type: 'direct_only',
+    url: 'https://centralrestaurante.com.pe/',
+  },
+  {
+    id: '11111111-0040-0000-0000-000000000001',
+    name: 'Gaggan',
+    restaurantSlug: 'gaggan',
+    type: 'direct_only',
+    url: 'https://www.eatatgaggan.com/',
+  },
+  {
+    id: '11111111-0041-0000-0000-000000000001',
+    name: 'Den',
+    restaurantSlug: 'den-tokyo',
+    type: 'direct_only',
+    url: 'https://www.jimbochoden.com/',
+  },
+  {
+    id: '11111111-0042-0000-0000-000000000001',
+    name: 'Florilège',
+    restaurantSlug: 'florilege',
+    type: 'direct_only',
+    url: 'https://www.florilegetokyo.com/',
+  },
+  {
+    id: '11111111-0043-0000-0000-000000000001',
+    name: 'Narisawa',
+    restaurantSlug: 'narisawa',
+    type: 'direct_only',
+    url: 'https://www.narisawa-yoshihiro.com/',
+  },
+  {
+    id: '11111111-0044-0000-0000-000000000001',
+    name: 'Quintonil',
+    restaurantSlug: 'quintonil',
+    type: 'direct_only',
+    url: 'https://www.quintonil.com/',
+  },
+]
+
+/**
+ * Returns only the configs that have an active scraper (resy or tock).
+ * Logs skipped restaurants.
+ */
+export function getScrapableConfigs(): RestaurantScraperConfig[] {
+  return STATIC_CONFIGS.filter(c => {
+    if (c.type === 'phone_only' || c.type === 'email_only' || c.type === 'direct_only') {
+      return false
+    }
+    return true
+  })
 }
 
 /**
- * Maps restaurants to their booking system configs.
- * 
- * Known booking systems (researched 2026-03-26):
- * 
- * ✅ SCRAPEABLE:
- * - Rutz (Berlin, 2★): Formitable/Zenchef API — uid: a0f9601c
- * - Steirereck (Wien, 2★): aleno.me widget — browser-based
- * - The Table Kevin Fehling (Hamburg, 3★): OpenTable — opentable.com/r/the-table-kevin-fehling-hamburg
- * - Aqua (Wolfsburg, 2★): OpenTable — opentable.com/aqua-the-ritz-carlton-wolfsburg
- * - Victor's Fine Dining (Perl, 3★): OpenTable (via Michelin Guide partnership)
- * - Vendôme (Bergisch Gladbach, 3★): TheFork — thefork.com/restaurant/vendome-r622705
- * - Überfahrt (Rottach-Egern, 3★): TheFork — thefork.com/restaurant/restaurant-uberfahrt-christian-jurgens-r622837
- * 
- * ❌ NO ONLINE BOOKING:
- * - Schwarzwaldstube (Baiersbronn, 3★): Phone (07442/492 665) / email only
- * - JAN (München, 3★): Phone only — fixed reservation windows (Tue-Fri 18:30-19:00)
- * - Sonnora (Dreis, 3★): Phone (06508 406) / email only
- * - Amador (Wien, 2★→3★): Email only (reservations@palais-coburg.com → credit card required)
- * - Silvio Nickol (Wien, 2★): Phone/email only (reservations@palais-coburg.com)
+ * Returns ALL configs (used for reporting).
  */
-export async function getScraperConfigs(supabase: any): Promise<RestaurantScraperConfig[]> {
-  const { data: restaurants } = await supabase
-    .from('restaurants')
-    .select('id, name, booking_type, booking_url')
-    .eq('active', true)
-
-  if (!restaurants) return []
-
-  const configs: RestaurantScraperConfig[] = []
-
-  for (const r of restaurants) {
-    const config = getConfigForRestaurant(r)
-    if (config) {
-      configs.push(config)
-    }
-  }
-
-  return configs
+export function getAllConfigs(): RestaurantScraperConfig[] {
+  return STATIC_CONFIGS
 }
 
-function getConfigForRestaurant(r: any): RestaurantScraperConfig | null {
-  // Known restaurant → scraper mappings
-  const KNOWN_CONFIGS: Record<string, Partial<RestaurantScraperConfig>> = {
-    // ✅ Formitable API (working since day 1)
-    'Rutz': {
-      type: 'formitable',
-      url: 'https://rutz-restaurant.de/en/',
-      formitableSlug: 'a0f9601c',
-    },
-
-    // ✅ Aleno browser scraper (working since day 1)
-    'Steirereck': {
-      type: 'steirereck',
-      url: 'https://www.steirereck.at/steirereck-tisch.html',
-      alenoRestaurantId: '3y6gZKP9cambnibTC',
-    },
-
-    // ✅ OpenTable — browser scraper
-    'The Table Kevin Fehling': {
-      type: 'opentable',
-      url: 'https://www.opentable.com/r/the-table-kevin-fehling-hamburg',
-      opentableSlug: 'the-table-kevin-fehling-hamburg',
-    },
-
-    // ✅ OpenTable — browser scraper
-    'Aqua': {
-      type: 'opentable',
-      url: 'https://www.opentable.com/aqua-the-ritz-carlton-wolfsburg',
-      opentableSlug: 'aqua-the-ritz-carlton-wolfsburg',
-    },
-
-    // ✅ OpenTable — browser scraper (via Michelin partnership)
-    "Victor's Fine Dining": {
-      type: 'opentable',
-      url: 'https://www.opentable.com/r/victors-fine-dining-by-christian-bau-perl',
-      opentableSlug: 'victors-fine-dining-by-christian-bau-perl',
-    },
-
-    // ✅ TheFork — browser scraper
-    'Vendôme': {
-      type: 'thefork',
-      url: 'https://www.thefork.com/restaurant/vendome-r622705',
-      theforkId: 'vendome-r622705',
-    },
-
-    // ✅ TheFork — browser scraper
-    'Überfahrt': {
-      type: 'thefork',
-      url: 'https://www.thefork.com/restaurant/restaurant-uberfahrt-christian-jurgens-r622837',
-      theforkId: 'restaurant-uberfahrt-christian-jurgens-r622837',
-    },
-
-    // ❌ No online booking
-    'Schwarzwaldstube': {
-      type: 'phone_only',
-      url: 'https://www.traube-tonbach.de/kulinarik/schwarzwaldstube/',
-    },
-    'JAN': {
-      type: 'phone_only',
-      url: 'https://jan-hartwig.com/',
-      // Fixed reservation windows: Tue-Fri 18:30-19:00, Fri also 12:00-12:30 & 19:00-19:30
-    },
-    'Sonnora': {
-      type: 'phone_only',
-      url: 'https://hotel-sonnora.de/en/',
-    },
-    'Amador': {
-      type: 'email_only',
-      url: 'https://en.restaurant-amador.com/reservation/',
-    },
-    'Silvio Nickol': {
-      type: 'phone_only',
-      url: 'https://palais-coburg.com/en/culinary/silvio-nickol/',
-    },
-  }
-
-  const known = KNOWN_CONFIGS[r.name]
-  if (known) {
-    if (known.type === 'phone_only' || known.type === 'email_only') {
-      console.log(`  ⚠️ ${r.name}: ${known.type === 'phone_only' ? 'Phone' : 'Email'} booking only — skipping scraper`)
-      return null
-    }
-    return {
-      id: r.id,
-      name: r.name,
-      ...known,
-    } as RestaurantScraperConfig
-  }
-
-  // For unknown restaurants, try to auto-detect based on booking_type
-  if (r.booking_type === 'formitable' && r.booking_url) {
-    const match = r.booking_url.match(/formitable\.com\/.*?([a-f0-9]{8})/)
-    if (match) {
-      return {
-        id: r.id,
-        name: r.name,
-        type: 'formitable',
-        url: r.booking_url,
-        formitableSlug: match[1],
-      }
-    }
-  }
-
-  if (r.booking_type === 'opentable' && r.booking_url) {
-    const match = r.booking_url.match(/opentable\.com\/r?\/?(.+?)(?:\?|$)/)
-    if (match) {
-      return {
-        id: r.id,
-        name: r.name,
-        type: 'opentable',
-        url: r.booking_url,
-        opentableSlug: match[1],
-      }
-    }
-  }
-
-  if (r.booking_type === 'thefork' && r.booking_url) {
-    const match = r.booking_url.match(/thefork\.com\/restaurant\/(.+?)(?:\?|$)/)
-    if (match) {
-      return {
-        id: r.id,
-        name: r.name,
-        type: 'thefork',
-        url: r.booking_url,
-        theforkId: match[1],
-      }
-    }
-  }
-
-  console.log(`  ⚠️ ${r.name}: No scraper configured — skipping`)
-  return null
+/**
+ * Legacy: kept for compatibility with existing index.ts signature.
+ * Returns scrapable configs without needing Supabase.
+ */
+export async function getScraperConfigs(_supabase?: unknown): Promise<RestaurantScraperConfig[]> {
+  return getScrapableConfigs()
 }

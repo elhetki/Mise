@@ -1,9 +1,10 @@
 import { getRestaurantById } from '@/lib/restaurants'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Star, ArrowLeft, ExternalLink, Zap, Globe, Clock } from 'lucide-react'
+import { Star, ArrowLeft, ExternalLink, Zap, Globe, Clock, Calendar } from 'lucide-react'
 import AddWatchForm from './add-watch-form'
-import { BookingPlatform } from '@/types'
+import { BookingPlatform, AvailabilityStatus, Availability } from '@/types'
+import { createClient } from '@/lib/supabase/server'
 
 function Stars({ count }: { count: number }) {
   return (
@@ -33,6 +34,120 @@ function BookingPlatformLabel({ platform }: { platform: BookingPlatform }) {
   return map[platform]
 }
 
+function formatTime(time: string): string {
+  // time is "HH:MM:SS" or "HH:MM"
+  const [h, m] = time.split(':')
+  const hour = parseInt(h, 10)
+  const ampm = hour >= 12 ? 'pm' : 'am'
+  const hour12 = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+  return `${hour12}:${m}${ampm}`
+}
+
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr + 'T00:00:00')
+  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+interface AvailabilitySlotsProps {
+  slots: Availability[]
+  restaurantName: string
+}
+
+function AvailabilitySlots({ slots, restaurantName }: AvailabilitySlotsProps) {
+  if (slots.length === 0) {
+    return (
+      <div className="card" style={{ padding: '20px', marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <Calendar size={16} style={{ color: 'var(--burgundy)' }} />
+          <h2 style={{
+            fontFamily: 'Fraunces, Georgia, serif',
+            fontSize: 16,
+            fontWeight: 600,
+            color: 'var(--ink)',
+          }}>
+            Live Availability
+          </h2>
+        </div>
+        <p className="text-caption" style={{ color: 'var(--ink-3)' }}>
+          No open slots found in the next 30 days. Set a watch below and we&apos;ll alert you the instant something opens.
+        </p>
+      </div>
+    )
+  }
+
+  // Group by date
+  const byDate = slots.reduce<Record<string, Availability[]>>((acc, slot) => {
+    if (!acc[slot.date]) acc[slot.date] = []
+    acc[slot.date].push(slot)
+    return acc
+  }, {})
+
+  const sortedDates = Object.keys(byDate).sort()
+
+  return (
+    <div className="card" style={{ padding: '20px', marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <Calendar size={16} style={{ color: 'var(--burgundy)' }} />
+        <h2 style={{
+          fontFamily: 'Fraunces, Georgia, serif',
+          fontSize: 16,
+          fontWeight: 600,
+          color: 'var(--ink)',
+        }}>
+          Live Availability
+        </h2>
+        <span className="badge" style={{ marginLeft: 'auto', background: 'var(--sage-light)', color: 'var(--sage-dark)' }}>
+          {slots.length} slot{slots.length === 1 ? '' : 's'} open
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {sortedDates.slice(0, 7).map(date => (
+          <div key={date} style={{ borderBottom: '1px solid var(--line)', paddingBottom: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {formatDate(date)}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {byDate[date]
+                .sort((a, b) => a.time.localeCompare(b.time))
+                .map(slot => (
+                  <div
+                    key={slot.id}
+                    style={{
+                      display: 'inline-flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      padding: '6px 10px',
+                      background: 'var(--paper-light)',
+                      border: '1px solid var(--line)',
+                      borderRadius: 8,
+                      gap: 2,
+                    }}
+                  >
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>
+                      {formatTime(slot.time)}
+                    </span>
+                    <span style={{ fontSize: 10, color: 'var(--ink-4)' }}>
+                      {slot.party_sizes.sort().join(', ')} guests
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        ))}
+        {sortedDates.length > 7 && (
+          <p className="text-caption" style={{ color: 'var(--ink-4)' }}>
+            +{sortedDates.length - 7} more dates available
+          </p>
+        )}
+      </div>
+      <p style={{ fontSize: 11, color: 'var(--ink-4)', marginTop: 12 }}>
+        Last checked: {new Date(slots[0].checked_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+      </p>
+    </div>
+  )
+}
+
 export default async function RestaurantPage({
   params,
 }: {
@@ -46,12 +161,64 @@ export default async function RestaurantPage({
   const r = restaurant
   const platformInfo = BookingPlatformLabel({ platform: r.bookingPlatform })
 
+  // Fetch real availability from Supabase
+  let liveSlots: Availability[] = []
+  let liveStatus: AvailabilityStatus = r.availabilityStatus
+
+  try {
+    const supabase = await createClient()
+
+    // Look up the restaurant's UUID by slug
+    const { data: dbRestaurant } = await supabase
+      .from('restaurants')
+      .select('id, availability_status, slug')
+      .eq('slug', id)
+      .single()
+
+    if (dbRestaurant) {
+      // Update status from DB (scrapers write this)
+      if (dbRestaurant.availability_status) {
+        liveStatus = dbRestaurant.availability_status as AvailabilityStatus
+      }
+
+      // Fetch availability slots for the next 30 days
+      const today = new Date().toISOString().split('T')[0]
+      const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+      const { data: slots } = await supabase
+        .from('availability')
+        .select('*')
+        .eq('restaurant_id', dbRestaurant.id)
+        .eq('status', 'available')
+        .gte('date', today)
+        .lte('date', future)
+        .order('date', { ascending: true })
+        .order('time', { ascending: true })
+        .limit(100)
+
+      if (slots) {
+        liveSlots = slots as Availability[]
+      }
+
+      // Derive status from live slots if we have them
+      if (liveSlots.length > 0) {
+        const hasNearTerm = liveSlots.some(s => {
+          const daysAway = Math.ceil((new Date(s.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          return daysAway <= 14
+        })
+        liveStatus = hasNearTerm ? 'available' : 'limited'
+      }
+    }
+  } catch (_err) {
+    // Use static data fallback — no-op
+  }
+
   const statusConfig = {
     available:   { dot: 'status-dot-available',   label: 'Slots open — check the booking platform now' },
     limited:     { dot: 'status-dot-limited',      label: 'Limited availability — act quickly' },
     unavailable: { dot: 'status-dot-unavailable',  label: 'No availability found — we\'re monitoring continuously' },
     unknown:     { dot: 'status-dot-unavailable',  label: 'Availability unknown — set a watch to be notified' },
-  }[r.availabilityStatus]
+  }[liveStatus]
 
   return (
     <div style={{ padding: '24px 16px', maxWidth: 800 }}>
@@ -166,6 +333,11 @@ export default async function RestaurantPage({
           )}
         </div>
       </div>
+
+      {/* Live availability slots (from scraper) */}
+      {(r.bookingPlatform === 'resy' || r.bookingPlatform === 'tock') && (
+        <AvailabilitySlots slots={liveSlots} restaurantName={r.name} />
+      )}
 
       {/* Two column: watch form + info */}
       <div

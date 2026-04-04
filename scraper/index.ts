@@ -1,13 +1,22 @@
-import { getScraperConfigs } from './config'
+import { getScrapableConfigs } from './config'
 import { supabase } from './supabase'
 import { matchAvailability } from './matcher'
 import { notifyMatches } from './notifier'
 import type { ScraperResult, AvailabilitySlot } from './scrapers/base'
+import type { RestaurantScraperConfig } from './config'
 
 // Import scrapers dynamically based on type
-async function runScraper(config: any): Promise<ScraperResult> {
+async function runScraper(config: RestaurantScraperConfig): Promise<ScraperResult> {
   try {
     switch (config.type) {
+      case 'resy': {
+        const { ResyScraper } = await import('./scrapers/resy')
+        return new ResyScraper(config).scrape()
+      }
+      case 'tock': {
+        const { TockScraper } = await import('./scrapers/tock')
+        return new TockScraper(config).scrape()
+      }
       case 'formitable': {
         const { FormitableScraper } = await import('./scrapers/formitable')
         return new FormitableScraper(config).scrape()
@@ -56,6 +65,8 @@ async function saveAvailability(result: ScraperResult): Promise<void> {
 
   if (result.slots.length === 0) {
     console.log(`  📋 ${result.restaurantName}: No availability found`)
+    // Update availability_status to 'unavailable' in restaurants table
+    await updateAvailabilityStatus(result.restaurantId, 'unavailable')
     return
   }
 
@@ -82,24 +93,52 @@ async function saveAvailability(result: ScraperResult): Promise<void> {
       saved += batch.length
     }
   }
-  console.log(`  ✅ ${result.restaurantName}: Saved ${saved} real availability slots`)
+
+  // Determine availability status based on slots
+  const hasNearTermSlots = result.slots.some(s => {
+    const slotDate = new Date(s.date)
+    const daysAway = Math.ceil((slotDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    return daysAway <= 14
+  })
+
+  const status = hasNearTermSlots ? 'available' : 'limited'
+  await updateAvailabilityStatus(result.restaurantId, status)
+
+  const simFlag = result.simulated ? ' (simulated)' : ''
+  console.log(`  ✅ ${result.restaurantName}: Saved ${saved} slots, status=${status}${simFlag}`)
+}
+
+async function updateAvailabilityStatus(
+  restaurantId: string,
+  status: 'available' | 'limited' | 'unavailable'
+): Promise<void> {
+  const { error } = await supabase
+    .from('restaurants')
+    .update({ availability_status: status })
+    .eq('id', restaurantId)
+
+  if (error) {
+    console.error(`  DB error updating status for ${restaurantId}:`, error.message)
+  }
 }
 
 async function main() {
   console.log(`\n🔍 Mise Scraper — ${new Date().toISOString()}`)
   console.log('━'.repeat(50))
 
-  // 1. Get scraper configs
-  const configs = await getScraperConfigs(supabase)
-  console.log(`Found ${configs.length} restaurants to scrape\n`)
+  // 1. Get scraper configs (static, no DB needed)
+  const configs = getScrapableConfigs()
+  console.log(`Found ${configs.length} restaurants to scrape`)
 
-  if (configs.length === 0) {
-    console.log('⚠️  No restaurants found. Check Supabase DB — restaurants table must have active=true for Rutz, Steirereck, Schwarzwaldstube')
-  }
+  const resyConfigs = configs.filter(c => c.type === 'resy')
+  const tockConfigs = configs.filter(c => c.type === 'tock')
+  const otherConfigs = configs.filter(c => c.type !== 'resy' && c.type !== 'tock')
 
-  // 2. Run all scrapers
+  console.log(`  → ${resyConfigs.length} Resy, ${tockConfigs.length} Tock, ${otherConfigs.length} other\n`)
+
+  // 2. Run all scrapers sequentially (respect rate limits)
   for (const config of configs) {
-    console.log(`\nScraping ${config.name}...`)
+    console.log(`\nScraping ${config.name} (${config.type})...`)
     const result = await runScraper(config)
     await saveAvailability(result)
   }

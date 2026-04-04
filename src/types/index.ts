@@ -40,7 +40,7 @@ export interface DbRestaurant {
   country: string
   michelin_stars: number
   cuisine: string | null
-  booking_type: 'thefork' | 'opentable' | 'resy' | 'website' | 'email' | 'phone'
+  booking_type: 'thefork' | 'opentable' | 'resy' | 'tock' | 'sevenrooms' | 'direct' | 'website' | 'email' | 'phone'
   booking_url: string | null
   booking_email: string | null
   image_url: string | null
@@ -49,6 +49,8 @@ export interface DbRestaurant {
   lng: number | null
   active: boolean
   created_at: string
+  slug: string | null
+  availability_status: 'available' | 'limited' | 'unavailable' | null
 }
 
 export interface Availability {
