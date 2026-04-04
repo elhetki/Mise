@@ -335,7 +335,7 @@ export default async function RestaurantPage({
       </div>
 
       {/* Live availability slots (from scraper) */}
-      {(r.bookingPlatform === 'resy' || r.bookingPlatform === 'tock') && (
+      {(r.bookingPlatform === 'resy' || r.bookingPlatform === 'tock' || r.bookingPlatform === 'sevenrooms' || r.bookingPlatform === 'opentable') && (
         <AvailabilitySlots slots={liveSlots} restaurantName={r.name} />
       )}
 

@@ -5,11 +5,14 @@
  * IDs match the UUIDs inserted via migration.
  *
  * Booking platforms:
- *   resy     → ResyScraper (22 restaurants)
- *   tock     → TockScraper (9 restaurants)
- *   direct   → no scraper (direct booking via restaurant website)
- *   phone    → no scraper
- *   sevenrooms → no scraper (yet)
+ *   resy        → ResyScraper
+ *   tock        → TockScraper
+ *   sevenrooms  → SevenRoomsScraper
+ *   opentable   → OpenTableScraper
+ *   formitable  → FormitableScraper
+ *   steirereck  → SteirereckScraper
+ *   direct_only → no scraper (simulate)
+ *   phone_only  → no scraper
  */
 
 export interface RestaurantScraperConfig {
@@ -23,6 +26,8 @@ export interface RestaurantScraperConfig {
   resyCity?: string
   // Tock-specific
   tockSlug?: string
+  // SevenRooms-specific
+  sevenroomsVenue?: string
   // Legacy scrapers
   formitableSlug?: string
   alenoKey?: string
@@ -35,6 +40,7 @@ export interface RestaurantScraperConfig {
 export type ScraperType =
   | 'resy'
   | 'tock'
+  | 'sevenrooms'
   | 'formitable'
   | 'steirereck'
   | 'onepagebooking'
@@ -49,6 +55,7 @@ export type ScraperType =
  * The `id` field matches the UUIDs inserted into Supabase.
  */
 const STATIC_CONFIGS: RestaurantScraperConfig[] = [
+
   // ── NYC — Resy ──────────────────────────────────────────────────────────
   {
     id: '11111111-0001-0000-0000-000000000001',
@@ -169,33 +176,7 @@ const STATIC_CONFIGS: RestaurantScraperConfig[] = [
   },
 
   // ── London — Resy ───────────────────────────────────────────────────────
-  {
-    id: '11111111-0021-0000-0000-000000000001',
-    name: 'The Ledbury',
-    restaurantSlug: 'the-ledbury',
-    type: 'resy',
-    url: 'https://resy.com/cities/london/the-ledbury',
-    resySlug: 'the-ledbury',
-    resyCity: 'london',
-  },
-  {
-    id: '11111111-0024-0000-0000-000000000001',
-    name: 'Ikoyi',
-    restaurantSlug: 'ikoyi',
-    type: 'resy',
-    url: 'https://resy.com/cities/london/ikoyi-london',
-    resySlug: 'ikoyi-london',
-    resyCity: 'london',
-  },
-  {
-    id: '11111111-0025-0000-0000-000000000001',
-    name: 'Da Terra',
-    restaurantSlug: 'da-terra',
-    type: 'resy',
-    url: 'https://resy.com/cities/london/da-terra',
-    resySlug: 'da-terra',
-    resyCity: 'london',
-  },
+  // NOTE: London restaurants are on UK Resy shard — will fall back to simulate
   {
     id: '11111111-0026-0000-0000-000000000001',
     name: 'Kitchen Table',
@@ -215,15 +196,6 @@ const STATIC_CONFIGS: RestaurantScraperConfig[] = [
     resyCity: 'london',
   },
   {
-    id: '11111111-0029-0000-0000-000000000001',
-    name: 'The Clove Club',
-    restaurantSlug: 'the-clove-club',
-    type: 'resy',
-    url: 'https://resy.com/cities/london/the-clove-club',
-    resySlug: 'the-clove-club',
-    resyCity: 'london',
-  },
-  {
     id: '11111111-0030-0000-0000-000000000001',
     name: "Lyle's",
     restaurantSlug: 'lyles',
@@ -232,14 +204,65 @@ const STATIC_CONFIGS: RestaurantScraperConfig[] = [
     resySlug: 'lyles-london',
     resyCity: 'london',
   },
+
+  // ── London — SevenRooms ──────────────────────────────────────────────────
+  {
+    id: '11111111-0024-0000-0000-000000000001',
+    name: 'Ikoyi',
+    restaurantSlug: 'ikoyi',
+    type: 'sevenrooms',
+    url: 'https://sevenrooms.com/reservations/ikoyilondon',
+    sevenroomsVenue: 'ikoyilondon',
+  },
+  {
+    id: '11111111-0025-0000-0000-000000000001',
+    name: 'Da Terra',
+    restaurantSlug: 'da-terra',
+    type: 'sevenrooms',
+    url: 'https://sevenrooms.com/reservations/daterra',
+    sevenroomsVenue: 'daterra',
+  },
+  {
+    id: '11111111-0027-0000-0000-000000000001',
+    name: 'A. Wong',
+    restaurantSlug: 'a-wong',
+    type: 'sevenrooms',
+    url: 'https://sevenrooms.com/reservations/awong',
+    sevenroomsVenue: 'awong',
+  },
   {
     id: '11111111-0034-0000-0000-000000000001',
     name: 'Noble Rot Soho',
     restaurantSlug: 'noble-rot-soho',
-    type: 'resy',
-    url: 'https://resy.com/cities/london/noble-rot-london',
-    resySlug: 'noble-rot-london',
-    resyCity: 'london',
+    type: 'sevenrooms',
+    url: 'https://sevenrooms.com/reservations/noblerotsoho',
+    sevenroomsVenue: 'noblerotsoho',
+  },
+
+  // ── London — OpenTable ───────────────────────────────────────────────────
+  {
+    id: '11111111-0021-0000-0000-000000000001',
+    name: 'The Ledbury',
+    restaurantSlug: 'the-ledbury',
+    type: 'opentable',
+    url: 'https://www.opentable.co.uk/the-ledbury',
+    opentableSlug: 'the-ledbury',
+  },
+  {
+    id: '11111111-0029-0000-0000-000000000001',
+    name: 'The Clove Club',
+    restaurantSlug: 'the-clove-club',
+    type: 'opentable',
+    url: 'https://www.opentable.co.uk/the-clove-club-london',
+    opentableSlug: 'the-clove-club-london',
+  },
+  {
+    id: '11111111-0031-0000-0000-000000000001',
+    name: 'St. John',
+    restaurantSlug: 'st-john',
+    type: 'opentable',
+    url: 'https://www.opentable.co.uk/st-john-restaurant-london',
+    opentableSlug: 'st-john-restaurant-london',
   },
 
   // ── NYC — Tock ──────────────────────────────────────────────────────────
@@ -284,7 +307,33 @@ const STATIC_CONFIGS: RestaurantScraperConfig[] = [
     tockSlug: 'noda',
   },
 
+  // ── London — Tock ────────────────────────────────────────────────────────
+  {
+    id: '11111111-0023-0000-0000-000000000001',
+    name: 'Core by Clare Smyth',
+    restaurantSlug: 'core-by-clare-smyth',
+    type: 'tock',
+    url: 'https://www.exploretock.com/core-by-clare-smyth',
+    tockSlug: 'core-by-clare-smyth',
+  },
+
   // ── World — Tock ────────────────────────────────────────────────────────
+  {
+    id: '11111111-0036-0000-0000-000000000001',
+    name: 'Noma',
+    restaurantSlug: 'noma',
+    type: 'tock',
+    url: 'https://www.exploretock.com/noma',
+    tockSlug: 'noma',
+  },
+  {
+    id: '11111111-0044-0000-0000-000000000001',
+    name: 'Quintonil',
+    restaurantSlug: 'quintonil',
+    type: 'tock',
+    url: 'https://www.exploretock.com/quintonil',
+    tockSlug: 'quintonil',
+  },
   {
     id: '11111111-0045-0000-0000-000000000001',
     name: 'Pujol',
@@ -356,34 +405,13 @@ const STATIC_CONFIGS: RestaurantScraperConfig[] = [
     url: 'https://asadoretxebarri.com/',
   },
 
-  // ── No scraper — direct booking ──────────────────────────────────────────
+  // ── No scraper — direct booking only ────────────────────────────────────
   {
     id: '11111111-0022-0000-0000-000000000001',
     name: 'Sketch (Lecture Room)',
     restaurantSlug: 'sketch-lecture-room',
     type: 'direct_only',
     url: 'https://www.sketch.london/',
-  },
-  {
-    id: '11111111-0023-0000-0000-000000000001',
-    name: 'Core by Clare Smyth',
-    restaurantSlug: 'core-by-clare-smyth',
-    type: 'direct_only',
-    url: 'https://www.corebyclaresmyth.com/',
-  },
-  {
-    id: '11111111-0027-0000-0000-000000000001',
-    name: 'A. Wong',
-    restaurantSlug: 'a-wong',
-    type: 'direct_only',
-    url: 'https://www.awong.co.uk/',
-  },
-  {
-    id: '11111111-0031-0000-0000-000000000001',
-    name: 'St. John',
-    restaurantSlug: 'st-john',
-    type: 'direct_only',
-    url: 'https://stjohnrestaurant.com/',
   },
   {
     id: '11111111-0032-0000-0000-000000000001',
@@ -398,13 +426,6 @@ const STATIC_CONFIGS: RestaurantScraperConfig[] = [
     restaurantSlug: 'brat-shoreditch-roof',
     type: 'direct_only',
     url: 'https://bratrestaurant.com/',
-  },
-  {
-    id: '11111111-0036-0000-0000-000000000001',
-    name: 'Noma',
-    restaurantSlug: 'noma',
-    type: 'direct_only',
-    url: 'https://noma.dk/',
   },
   {
     id: '11111111-0037-0000-0000-000000000001',
@@ -455,25 +476,15 @@ const STATIC_CONFIGS: RestaurantScraperConfig[] = [
     type: 'direct_only',
     url: 'https://www.narisawa-yoshihiro.com/',
   },
-  {
-    id: '11111111-0044-0000-0000-000000000001',
-    name: 'Quintonil',
-    restaurantSlug: 'quintonil',
-    type: 'direct_only',
-    url: 'https://www.quintonil.com/',
-  },
 ]
 
 /**
- * Returns only the configs that have an active scraper (resy or tock).
- * Logs skipped restaurants.
+ * Returns only the configs that have an active scraper.
+ * Excludes phone_only, email_only, and direct_only.
  */
 export function getScrapableConfigs(): RestaurantScraperConfig[] {
   return STATIC_CONFIGS.filter(c => {
-    if (c.type === 'phone_only' || c.type === 'email_only' || c.type === 'direct_only') {
-      return false
-    }
-    return true
+    return c.type !== 'phone_only' && c.type !== 'email_only' && c.type !== 'direct_only'
   })
 }
 

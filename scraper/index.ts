@@ -1,3 +1,8 @@
+// Load .env.local for local scraper runs
+import { config as dotenvConfig } from 'dotenv'
+import { resolve } from 'path'
+dotenvConfig({ path: resolve(process.cwd(), '.env.local') })
+
 import { getScrapableConfigs } from './config.js'
 import { supabase } from './supabase.js'
 import { matchAvailability } from './matcher.js'
@@ -28,6 +33,10 @@ async function runScraper(config: RestaurantScraperConfig): Promise<ScraperResul
       case 'onepagebooking': {
         const { OnepagebookingScraper } = await import('./scrapers/onepagebooking.js')
         return new OnepagebookingScraper(config).scrape()
+      }
+      case 'sevenrooms': {
+        const { SevenRoomsScraper } = await import('./scrapers/sevenrooms.js')
+        return new SevenRoomsScraper(config).scrape()
       }
       case 'opentable': {
         const { OpenTableScraper } = await import('./scrapers/opentable.js')
